@@ -1,0 +1,809 @@
+:root {
+  --abyss: #041012;
+  --silt: #10262a;
+  --luciferin: #5fe3c2;
+  --bloom: #e4fff5;
+  --ember: #ff7442;
+  /* snow: everything a person made or reads on the glass, matte and never glowing */
+  --ink: #f3f1ec;
+  /* wall text in a gallery: Instrument Sans for every word, narrowed for numbers; Syne for titles and the name */
+  --type: 'Instrument Sans Variable', system-ui, sans-serif;
+  --display: 'Syne Variable', 'Instrument Sans Variable', system-ui, sans-serif;
+  --numerals: 'Instrument Sans Variable', 'Arial Narrow', system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* hidden means hidden, whatever display a style gives the element */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--abyss);
+  color: var(--ink);
+  font-family: var(--type);
+  -webkit-font-smoothing: antialiased;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  cursor: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+#world,
+#lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#lines {
+  pointer-events: none;
+}
+
+#stage.lost #world {
+  visibility: hidden;
+}
+
+#glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- the glass ---------- */
+
+#glass {
+  font-family: var(--type);
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.62);
+}
+
+#glass.failed {
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.num {
+  font-family: var(--numerals);
+  font-stretch: 78%;
+  font-variant-numeric: tabular-nums;
+  font-weight: 460;
+}
+
+.readout {
+  position: absolute;
+  left: 36px;
+  bottom: 30px;
+  display: flex;
+  gap: 24px;
+  align-items: baseline;
+  font-size: 13px;
+  opacity: 0.78;
+}
+
+.readout .num {
+  font-size: 14px;
+}
+
+.readout .tag {
+  opacity: 0.6;
+}
+
+.mag,
+.exposure {
+  position: absolute;
+  font-size: 13px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.mag {
+  right: 36px;
+  bottom: 30px;
+  font-family: var(--numerals);
+  font-stretch: 78%;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+.exposure {
+  left: 50%;
+  top: 30px;
+  transform: translateX(-50%);
+}
+
+.mag.on,
+.exposure.on {
+  opacity: 0.78;
+  visibility: visible;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  transform: translateX(-50%);
+  font-size: 14px;
+  opacity: 0.55;
+  transition: opacity 1.4s, visibility 1.4s;
+  white-space: nowrap;
+}
+
+.hint.gone,
+.hint.held {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.draft {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 20px;
+  font-style: italic;
+  white-space: pre;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.draft.on {
+  opacity: 0.95;
+  visibility: visible;
+}
+
+.caret {
+  display: inline-block;
+  width: 1px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.17em;
+  background: var(--ink);
+  animation: blink 1.06s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.draft-help {
+  margin-top: 4px;
+  font-size: 12px;
+  font-style: normal;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s, visibility 0.4s;
+}
+
+.draft.first .draft-help {
+  opacity: 0.55;
+  visibility: visible;
+}
+
+.label,
+.word,
+.finding {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s;
+  will-change: transform;
+}
+
+.label,
+.word {
+  visibility: hidden;
+}
+
+.label.on,
+.word.on {
+  visibility: visible;
+}
+
+.label {
+  max-width: 320px;
+  text-wrap: pretty;
+}
+
+.label.on {
+  opacity: 0.94;
+}
+
+.label.on.deep {
+  opacity: 0.7;
+}
+
+.label .ask {
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.label .detail {
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  opacity: 0.74;
+}
+
+.label .detail .num {
+  font-size: 13px;
+}
+
+.ask-inline {
+  font-style: italic;
+}
+
+.label .what {
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.label.deep {
+  text-align: center;
+}
+
+.label.deep .detail {
+  font-size: 14px;
+  opacity: 0.86;
+}
+
+/* the keyboard's own field: 16px so phones do not zoom when it takes focus */
+#draft {
+  font-size: 16px;
+}
+
+.notice {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 15px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.notice.on {
+  opacity: 0.85;
+  visibility: visible;
+}
+
+.log {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.74;
+}
+
+.log li {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.word {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.word.on {
+  opacity: 0.82;
+}
+
+.finding {
+  translate: -50% calc(-100% - 22px);
+  text-wrap: balance;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.3;
+  max-width: 340px;
+  opacity: 1;
+}
+
+.finding-ask {
+  font-style: italic;
+}
+
+.finding-answer {
+  opacity: 0.9;
+}
+
+.dissolve {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 20px;
+  font-style: italic;
+  white-space: pre;
+}
+
+.dissolve .letter {
+  display: inline-block;
+  white-space: pre;
+}
+
+.help {
+  position: absolute;
+  right: 30px;
+  top: 28px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  opacity: 0.42;
+  pointer-events: auto;
+  transition: opacity 0.2s;
+}
+
+.help:hover {
+  opacity: 0.8;
+}
+
+.legend {
+  position: absolute;
+  right: 36px;
+  top: 58px;
+  width: 400px;
+  padding: 16px 18px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  background: rgba(4, 16, 18, 0.78);
+  border: 1px solid rgba(243, 241, 236, 0.12);
+  border-radius: 2px;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.legend.on {
+  opacity: 1;
+  visibility: visible;
+}
+
+.legend-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 18px;
+  margin: 0;
+}
+
+.legend-list dt {
+  white-space: nowrap;
+}
+
+.legend-list dd {
+  margin: 0;
+  opacity: 0.7;
+}
+
+.legend-keys {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .readout {
+    left: 20px;
+    bottom: 20px;
+    gap: 14px;
+  }
+
+  .legend {
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+}
+
+/* ---------- the landing page: chapters told on labels pinned to what they describe ---------- */
+
+#landing {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--type);
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.62);
+}
+
+#landing a,
+#landing button {
+  pointer-events: auto;
+  color: inherit;
+  text-decoration: none;
+}
+
+#landing button {
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+
+#landing :focus-visible {
+  outline: 1px solid rgba(243, 241, 236, 0.7);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+#landing code {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.88em;
+}
+
+.mark {
+  position: absolute;
+  left: 36px;
+  top: 26px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.mark-name {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 500;
+}
+
+.mark-line {
+  margin-top: 4px;
+  font-size: 12.5px;
+  opacity: 0.58;
+}
+
+a.mark:hover .mark-name {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.go-live {
+  position: absolute;
+  right: 66px;
+  top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 14px 6px 12px;
+  border: 1px solid rgba(243, 241, 236, 0.22);
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1.2;
+  transition: border-color 0.2s;
+}
+
+a.go-live:hover {
+  border-color: rgba(243, 241, 236, 0.5);
+}
+
+/* until the live colony opens, its place says when; the short form is for small screens */
+.go-live .short {
+  display: none;
+}
+
+/* the live colony's light, lit only while it is running */
+.go-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(243, 241, 236, 0.38);
+}
+
+.go-live.awake i {
+  background: var(--luciferin);
+  box-shadow: 0 0 8px var(--luciferin);
+}
+
+.plate {
+  font-size: 0.9em;
+  letter-spacing: 0.06em;
+}
+
+.index {
+  position: absolute;
+  right: 34px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+#landing .index button {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0 4px 10px;
+  font-size: 14px;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+
+#landing .index button:hover {
+  opacity: 0.8;
+}
+
+#landing .index button[aria-current] {
+  opacity: 1;
+}
+
+.index button[aria-current] .name {
+  font-weight: 500;
+}
+
+.index .plate {
+  min-width: 26px;
+  text-align: right;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* a chapter's words, engraved on the glass with no box: they hang from the hairline that leads to what they
+   describe, which turns level and runs on as their rule, above them or, when the subject is below, under them */
+.specimen {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 300px;
+  padding: 14px 0;
+  pointer-events: auto;
+  visibility: hidden;
+  opacity: 0;
+  will-change: transform, opacity, filter;
+  text-wrap: pretty;
+  /* the label keeps to empty glass; a dark breath around the words keeps them clear of a passing vein */
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.62),
+    0 0 10px rgba(4, 16, 18, 0.9);
+}
+
+.specimen.last {
+  width: 320px;
+}
+
+.specimen p,
+.specimen h2 {
+  margin: 0;
+}
+
+.specimen .chapter {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-right: 30px;
+  font-size: 12.5px;
+  opacity: 0.55;
+}
+
+.specimen .title {
+  margin-top: 6px;
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.specimen .biology {
+  margin-top: 9px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  opacity: 0.88;
+}
+
+.specimen .swarm {
+  margin-top: 7px;
+  font-size: 13px;
+  line-height: 1.45;
+  opacity: 0.58;
+}
+
+.specimen .turn {
+  margin-top: 12px;
+  display: grid;
+  justify-items: start;
+  gap: 9px;
+}
+
+.specimen .go-live {
+  position: static;
+}
+
+.specimen .status {
+  font-size: 12.5px;
+  line-height: 1.45;
+  opacity: 0.62;
+}
+
+/* the way on, and the cross that puts the tour away: words on the glass, quiet until pointed at */
+#landing .specimen .next {
+  margin-top: 12px;
+  font-size: 13px;
+  opacity: 0.66;
+  transition: opacity 0.2s;
+}
+
+#landing .specimen .close {
+  position: absolute;
+  /* above the chapter line, whose fade would otherwise paint over it and take its clicks */
+  z-index: 1;
+  top: 8px;
+  right: -8px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  line-height: 1;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+
+#landing .specimen .next:hover,
+#landing .specimen .close:hover {
+  opacity: 1;
+}
+
+/* a tour closed early waits in the corner across from the readout, to be picked up where it was left */
+#landing .resume {
+  position: absolute;
+  right: 36px;
+  bottom: 28px;
+  font-size: 13px;
+  opacity: 0.62;
+  transition: opacity 0.2s;
+}
+
+#landing .resume:hover {
+  opacity: 1;
+}
+
+/* the live colony's page, when its server cannot be reached */
+.asleep {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(440px, calc(100% - 48px));
+  margin: 0;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.5;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s, visibility 0.4s;
+}
+
+.asleep.on {
+  opacity: 0.85;
+  visibility: visible;
+}
+
+/* while the chapters play their scenes, the colony's own hints wait for the last one */
+.tour .hint,
+.tour .help {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* the colony draws its crosshair only once it is the visitor's; until then the pointer stays the visitor's own */
+.tour #stage {
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .mark {
+    left: 20px;
+    top: 18px;
+  }
+
+  .mark-line {
+    display: none;
+  }
+
+  .go-live {
+    right: 20px;
+    top: 14px;
+  }
+
+  .go-live .long {
+    display: none;
+  }
+
+  .go-live .short {
+    display: inline;
+  }
+
+  .landing .help {
+    display: none;
+  }
+
+  .index {
+    top: 56px;
+    right: 50%;
+    transform: translateX(50%);
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+  }
+
+  .index .name {
+    display: none;
+  }
+
+  #landing .index button {
+    padding: 6px 7px;
+  }
+
+  .specimen,
+  .specimen.last {
+    top: auto;
+    left: 20px;
+    right: 20px;
+    bottom: 52px;
+    width: auto;
+  }
+
+  .specimen .title {
+    font-size: 19.5px;
+  }
+
+  .specimen .biology {
+    font-size: 14px;
+  }
+
+  .specimen .swarm {
+    font-size: 12.5px;
+  }
+
+  #landing .resume {
+    right: 20px;
+    bottom: 18px;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "swarm-terrarium-live",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The live colony: real jcode agents on OpenRouter, streamed to the terrarium",
+  "type": "module",
+  "dependencies": {
+    "@1jehuang/jcode-sdk": "1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5"
+  }
+}

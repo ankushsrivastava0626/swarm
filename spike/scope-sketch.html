@@ -1,0 +1,1947 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swarm scope motion sketch</title>
+<!--
+  THROWAWAY SPIKE
+  A motion sketch of the swarm scope, built to pressure-test the design vision before sign-off.
+  The swarm is fake and scripted. Nothing here is production code or meant to be kept.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/monaspace-krypton@5.3.0/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/monaspace-krypton@5.3.0/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/monaspace-radon@5.3.0/400.css">
+<style>
+  :root {
+    --graphite: #26231f;
+    --graphite-raised: #2d2924;
+    --seam-dark: rgba(0, 0, 0, .45);
+    --seam-light: rgba(255, 238, 214, .04);
+    --legend: #8c8478;
+    --legend-dim: #645d54;
+    --glass: #0b181a;
+    --phosphor: #f2e6cf;
+    --amber: #f4a93c;
+    --cerise: #ef4a7b;
+    --paper: #b8ac92;
+    --paper-ink: #2a2620;
+    --barlow: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+    --krypton: "Monaspace Krypton", ui-monospace, Menlo, monospace;
+    --radon: "Monaspace Radon", "Monaspace Krypton", ui-monospace, monospace;
+    --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.25'/></svg>");
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--grain), var(--graphite);
+    color: var(--legend);
+    font-family: var(--barlow);
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .console {
+    display: grid;
+    height: 100vh;
+    grid-template-rows: 56px minmax(0, 1fr) 76px;
+    grid-template-columns: minmax(0, 1fr) clamp(224px, 22vw, 296px);
+  }
+
+  /* vitals: the master bus */
+  .vitals {
+    grid-column: 1 / -1;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 0 24px;
+    box-shadow: inset 0 -1px 0 var(--seam-dark), 0 1px 0 var(--seam-light);
+  }
+  .inst { display: flex; flex-direction: column; gap: 5px; }
+  .legend { font-size: 12px; line-height: 1; color: var(--legend); }
+  .readout {
+    height: 22px;
+    font: 13px/22px var(--krypton);
+    color: var(--phosphor);
+    opacity: .74;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout.alert { color: var(--amber); opacity: 1; }
+  #trace {
+    display: block;
+    border-radius: 3px;
+    background: var(--glass);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .75), 0 1px 0 var(--seam-light);
+    cursor: ew-resize;
+    touch-action: none;
+  }
+  .ladder { display: flex; gap: 3px; align-items: center; height: 22px; }
+  .ladder i { width: 5px; height: 14px; border-radius: 1px; background: rgba(242, 230, 207, .08); }
+  .ladder i.on { background: rgba(242, 230, 207, .8); box-shadow: 0 0 6px rgba(242, 230, 207, .35); }
+  .restart {
+    margin-left: auto;
+    padding: 6px 12px;
+    font: 500 12.5px var(--barlow);
+    color: var(--legend);
+    background: transparent;
+    border: 1px solid #3d3730;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .restart:hover { color: var(--phosphor); border-color: #5a524a; }
+  .restart:focus-visible { outline: 1px solid var(--phosphor); outline-offset: 2px; }
+
+  /* the scope */
+  .scope-wrap { position: relative; min-width: 0; min-height: 0; }
+  #scope { position: absolute; left: 0; top: 0; display: block; cursor: crosshair; touch-action: none; }
+
+  /* strip bay: exceptions only */
+  .bay {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    padding: 20px 16px;
+    box-shadow: inset 1px 0 0 var(--seam-dark), -1px 0 0 var(--seam-light);
+  }
+  .bay-empty { font-size: 13px; color: var(--legend-dim); }
+  .strips { display: flex; flex-direction: column; gap: 12px; }
+  .paper {
+    position: relative;
+    padding: 10px 12px 10px 22px;
+    color: var(--paper-ink);
+    background: var(--grain), var(--paper);
+    border-radius: 2px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .5), 0 8px 18px rgba(0, 0, 0, .4);
+  }
+  .paper::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 9px;
+    border-radius: 2px 0 0 2px;
+    background: var(--holder, #6f675c);
+    opacity: var(--breath, 1);
+  }
+  .strip { cursor: grab; touch-action: none; transform: translateX(118%); transition: transform .6s cubic-bezier(.2, .9, .25, 1); }
+  .strip.in { transform: none; }
+  .head { display: flex; gap: 14px; font: 11px var(--krypton); opacity: .74; }
+  .strip .ask { margin: 6px 0 8px; font: 500 13px/1.35 var(--krypton); }
+  .strip .how { font-size: 12px; line-height: 1.3; opacity: .7; }
+
+  /* voice bank */
+  .bank {
+    grid-column: 1 / -1;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px;
+    box-shadow: inset 0 1px 0 var(--seam-dark), 0 -1px 0 var(--seam-light);
+  }
+  .module {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px 9px 11px;
+    background: var(--graphite-raised);
+    border-radius: 4px;
+    box-shadow: inset 0 1px 0 rgba(255, 238, 214, .05), 0 1px 0 rgba(0, 0, 0, .45), 0 3px 8px rgba(0, 0, 0, .22);
+    cursor: grab;
+    touch-action: none;
+  }
+  .module:hover { background: #332e28; }
+  .jack { width: 14px; height: 14px; border-radius: 50%; background: #0f0e0c; border: 2px solid #4c463d; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .9); }
+  .module svg { width: 14px; height: 14px; overflow: visible; color: rgba(242, 230, 207, .72); }
+  .module .name { font-size: 14px; color: #a89f92; }
+  .hint { margin-left: auto; font-size: 13px; color: var(--legend-dim); text-align: right; }
+
+  /* things that float above the console */
+  #overlay { position: fixed; left: 0; top: 0; z-index: 6; pointer-events: none; }
+  #puck { position: fixed; left: 0; top: 0; z-index: 8; pointer-events: none; transform-origin: 0 0; will-change: transform; }
+  #puck .bubble {
+    padding: 6px 12px 7px;
+    font: 15px var(--radon);
+    color: var(--phosphor);
+    white-space: pre;
+    background: rgba(11, 24, 26, .94);
+    border: 1px solid rgba(242, 230, 207, .4);
+    border-radius: 16px;
+    box-shadow: 0 0 22px rgba(242, 230, 207, .14);
+  }
+  #puck .to { margin: 6px 0 0 12px; font: 11px var(--krypton); color: var(--legend); }
+  .caret { display: inline-block; width: 1px; height: 15px; margin-left: 2px; vertical-align: -2px; background: var(--phosphor); animation: blink 1.06s steps(2, start) infinite; }
+  @keyframes blink { to { visibility: hidden; } }
+  #flight {
+    position: fixed;
+    z-index: 7;
+    width: 276px;
+    pointer-events: none;
+    transform-origin: 50% 0;
+    transform: scaleY(0);
+    opacity: 0;
+    transition: transform .26s cubic-bezier(.2, .85, .25, 1), opacity .12s;
+  }
+  #flight.open { transform: scaleY(1); opacity: 1; }
+  #flight .row { display: grid; grid-template-columns: 52px 1fr; gap: 8px; margin-top: 6px; font: 11px/1.4 var(--krypton); }
+  #flight .k { font: 12px/1.35 var(--barlow); opacity: .62; }
+  #flight .v { white-space: pre-line; }
+  @media (prefers-reduced-motion: reduce) {
+    .caret { animation: none; }
+    .strip, #flight { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="console">
+  <header class="vitals">
+    <div class="inst"><canvas id="trace" title="Drag to replay the last minute"></canvas><span class="legend">momentum</span></div>
+    <div class="inst"><div class="ladder" id="ladder"></div><span class="legend">agreement</span></div>
+    <div class="inst"><span class="readout" id="agents"></span><span class="legend">agents</span></div>
+    <div class="inst"><span class="readout" id="spend"></span><span class="legend">spend</span></div>
+    <button class="restart" id="restart" type="button" title="Play the scripted scenario from the start">Restart sketch</button>
+  </header>
+  <main class="scope-wrap"><canvas id="scope" aria-label="Swarm scope"></canvas></main>
+  <aside class="bay" id="bay">
+    <div class="bay-empty" id="bay-empty">Nothing needs you</div>
+    <div class="strips" id="strips"></div>
+  </aside>
+  <footer class="bank">
+    <div class="module" data-role="research"><span class="jack"></span><svg viewBox="-7 -7 14 14" aria-hidden="true"><circle r="5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><span class="name">research</span></div>
+    <div class="module" data-role="build"><span class="jack"></span><svg viewBox="-7 -7 14 14" aria-hidden="true"><rect x="-4.5" y="-4.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><span class="name">build</span></div>
+    <div class="module" data-role="plan"><span class="jack"></span><svg viewBox="-7 -7 14 14" aria-hidden="true"><path d="M0-5.6 5.2 4.2H-5.2Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg><span class="name">plan</span></div>
+    <div class="module" data-role="critic"><span class="jack"></span><svg viewBox="-7 -7 14 14" aria-hidden="true"><path d="M0-5.8 5 0 0 5.8-5 0Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg><span class="name">critic</span></div>
+    <div class="hint" id="hint">Type anywhere to give an instruction</div>
+  </footer>
+</div>
+<canvas id="overlay"></canvas>
+<div id="puck" hidden><div class="bubble"><span id="puck-text"></span><span class="caret"></span></div><div class="to" id="puck-to"></div></div>
+<div id="flight" class="paper"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   THROWAWAY SPIKE: swarm scope motion sketch. The swarm is fake and
+   scripted so the motion can be judged. Not production code.
+   ===================================================================== */
+
+// ---------- constants ----------
+const TAU = Math.PI * 2;
+const SWEEP_PERIOD = 4;            // seconds per rotation: the swarm's clock
+const CORE_RHO = 0.16;             // core radius as a fraction of the scope radius
+const RINGS = [0.75, 0.5, 0.3];    // explore | draft | verify | core
+const CAP = 32;
+const GLYPH = 10;                  // blip size in px
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PHOS = [242, 230, 207], AMBER = [244, 169, 60], CERISE = [239, 74, 123], PRINT = [150, 196, 190], LEGEND = [140, 132, 120];
+const GLASS = '#0b181a';
+const F_LEGEND = '500 12px "Barlow Semi Condensed", "Arial Narrow", sans-serif';
+const F_LEGEND_S = '500 10.5px "Barlow Semi Condensed", "Arial Narrow", sans-serif';
+const F_READOUT = '11px "Monaspace Krypton", ui-monospace, Menlo, monospace';
+const F_READOUT_M = '12px "Monaspace Krypton", ui-monospace, Menlo, monospace';
+const handFont = px => `${px}px "Monaspace Radon", "Monaspace Krypton", ui-monospace, monospace`;
+const HINT = 'Type anywhere to give an instruction';
+const HINT_TYPING = 'Enter or click sends it to what is under the cursor. Esc cancels.';
+
+// ---------- helpers ----------
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const wrap = a => ((a % TAU) + TAU) % TAU;
+const wrap1 = f => ((f % 1) + 1) % 1;
+const angDiff = (a, b) => { const d = wrap(a - b); return d > Math.PI ? d - TAU : d; };
+const easeOut = t => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+const easeInOut = t => { t = clamp(t, 0, 1); return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${clamp(a, 0, 1).toFixed(3)})`;
+const amberPulse = t => 0.5 + 0.5 * Math.sin(TAU * 0.5 * t);   // sine LFO: needs you
+const faultOn = t => (t % 1) < 0.5;                               // square LFO: broken
+const $ = id => document.getElementById(id);
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+// ---------- dom ----------
+const scopeCv = $('scope'), sctx = scopeCv.getContext('2d');
+const overCv = $('overlay'), octx = overCv.getContext('2d');
+const traceCv = $('trace'), tctx = traceCv.getContext('2d');
+const stripsEl = $('strips'), bayEl = $('bay'), bayEmptyEl = $('bay-empty'), hintEl = $('hint');
+const puckEl = $('puck'), puckTextEl = $('puck-text'), puckToEl = $('puck-to'), flightEl = $('flight');
+const agentsEl = $('agents'), spendEl = $('spend'), ladderEl = $('ladder');
+for (let i = 0; i < 10; i++) ladderEl.append(el('i'));
+const TRACE_W = 220, TRACE_H = 22;
+
+// ---------- light ----------
+function makeGlow(c) {
+  const s = 64, cv = document.createElement('canvas');
+  cv.width = cv.height = s;
+  const g = cv.getContext('2d'), gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  gr.addColorStop(0, rgba(c, 1));
+  gr.addColorStop(0.16, rgba(c, 0.55));
+  gr.addColorStop(0.42, rgba(c, 0.13));
+  gr.addColorStop(1, rgba(c, 0));
+  g.fillStyle = gr;
+  g.fillRect(0, 0, s, s);
+  return cv;
+}
+const GLOW = { phos: makeGlow(PHOS), amber: makeGlow(AMBER), fault: makeGlow(CERISE) };
+function glow(c, sprite, x, y, size, alpha) {
+  if (alpha <= 0.004) return;
+  c.globalAlpha = Math.min(1, alpha);
+  c.drawImage(sprite, x - size / 2, y - size / 2, size, size);
+  c.globalAlpha = 1;
+}
+function glyphPath(c, kind, x, y, s) {
+  c.beginPath();
+  if (kind === 'circle') c.arc(x, y, s * 0.5, 0, TAU);
+  else if (kind === 'square') c.rect(x - s * 0.44, y - s * 0.44, s * 0.88, s * 0.88);
+  else if (kind === 'triangle') { c.moveTo(x, y - s * 0.6); c.lineTo(x + s * 0.56, y + s * 0.42); c.lineTo(x - s * 0.56, y + s * 0.42); c.closePath(); }
+  else { c.moveTo(x, y - s * 0.62); c.lineTo(x + s * 0.52, y); c.lineTo(x, y + s * 0.62); c.lineTo(x - s * 0.52, y); c.closePath(); }
+}
+
+// ---------- geometry ----------
+let W = 0, H = 0, DPR = 1, cx = 0, cy = 0, R = 100, scopeRect = { left: 0, top: 0, width: 0, height: 0 };
+function fit(cv, ctx, w, h) {
+  cv.width = Math.max(1, Math.round(w * DPR));
+  cv.height = Math.max(1, Math.round(h * DPR));
+  cv.style.width = w + 'px';
+  cv.style.height = h + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+function resize() {
+  const ox = cx, oy = cy, oR = R;
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  scopeRect = scopeCv.parentElement.getBoundingClientRect();
+  W = scopeRect.width;
+  H = scopeRect.height;
+  fit(scopeCv, sctx, W, H);
+  fit(overCv, octx, innerWidth, innerHeight);
+  fit(traceCv, tctx, TRACE_W, TRACE_H);
+  cx = W / 2;
+  cy = H / 2;
+  R = Math.max(100, Math.min(W, H) / 2 - 46);
+  if (ox !== cx || oy !== cy || oR !== R) remapPositions(ox, oy, oR);
+}
+// positions live in screen space, so carry everything across a resize instead of letting it glide there
+function remapPositions(ox, oy, oR) {
+  const k = R / oR, f = (x, y) => [cx + (x - ox) * k, cy + (y - oy) * k];
+  for (const a of agents) {
+    [a.px, a.py] = f(a.px, a.py);
+    [a.rx, a.ry] = f(a.rx, a.ry);
+    a.vx *= k;
+    a.vy *= k;
+    a.trail = a.trail.map(([x, y, t]) => [...f(x, y), t]);
+    a.dots = a.dots.map(([x, y]) => f(x, y));
+  }
+  for (const d of departed) [d.x, d.y] = f(d.x, d.y);
+  for (const n of notes) if (!n.agent) [n.x, n.y] = f(n.x, n.y);
+}
+// angle th is measured from twelve o'clock, clockwise; rho is a fraction of the scope radius
+const polar = (th, rho) => [cx + Math.sin(th) * rho * R, cy - Math.cos(th) * rho * R];
+function toPolar(x, y) {
+  const dx = x - cx, dy = y - cy;
+  return [wrap(Math.atan2(dx, -dy)), Math.hypot(dx, dy) / R];
+}
+
+// ---------- sectors (workstreams) ----------
+let sectors = [], sectorOffset = 0, iris = null, pendingMission = null;
+function makeSector(name, w, stance, freq) {
+  return { name, w, start: 0, stance, freq, fix: { u: 0.5, rho: 0.58 }, lock: 0, coherence: 0, pool: 0, handled: false };
+}
+function layoutSectors() {
+  let s = sectorOffset;
+  for (const q of sectors) { q.start = s; s += q.w; }
+}
+// the iris closes the old sectors to a point, then fans the new ones open
+function irisE() {
+  if (!iris) return 1;
+  const t = now - iris.t0;
+  return t < 0.4 ? 1 - easeInOut(t / 0.4) : easeOut((t - 0.4) / 0.85);
+}
+function geom(i) {
+  const q = sectors[i], e = irisE();
+  return [sectorOffset + (q.start - sectorOffset) * e, q.w * e];
+}
+const sectorTheta = (i, u) => { const [st, w] = geom(i); return wrap((st + w * u) * TAU); };
+const trueTheta = (i, u) => wrap((sectors[i].start + sectors[i].w * u) * TAU);
+function sectorAt(th) {
+  const f = wrap1(th / TAU);
+  for (let i = 0; i < sectors.length; i++) {
+    const d = wrap1(f - sectors[i].start);
+    if (d < sectors[i].w) return [i, d / sectors[i].w];
+  }
+  return [0, 0.5];
+}
+function clampToSector(th, i) {
+  const [st, w] = geom(i), lo = st * TAU, span = w * TAU, m = Math.min(0.035, span * 0.2);
+  let rel = wrap(th - lo);
+  if (rel > span) rel = (rel - span) < (TAU - rel) ? span : 0;
+  return wrap(lo + clamp(rel, m, span - m));
+}
+
+// ---------- agents ----------
+const ROLE = {
+  research: { code: 'RES', glyph: 'circle' },
+  build: { code: 'BLD', glyph: 'square' },
+  plan: { code: 'PLN', glyph: 'triangle' },
+  critic: { code: 'CRT', glyph: 'diamond' },
+};
+const STEP = {
+  cart: { research: 'mapping the cart flow', build: 'wiring cart total to checkout', plan: 'sequencing cart changes', critic: 'reviewing cart state' },
+  tests: { research: 'collecting flaky test history', build: 'writing the checkout e2e test', plan: 'ordering the test matrix', critic: 'reviewing test coverage' },
+  payments: { research: 'reading sandbox docs', build: 'calling the charge endpoint', plan: 'planning the charge flow', critic: 'reviewing idempotency keys' },
+  receipts: { research: 'comparing receipt templates', build: 'rendering the receipt email', plan: 'choosing when receipts send', critic: 'checking receipt totals' },
+  'fraud checks': { research: 're-running the risk model', build: 're-scoring velocity rules', plan: 'weighing rule thresholds', critic: 'retrying the risk API' },
+  docs: { research: 'outlining checkout docs', build: 'drafting the one-tap guide', plan: 'ordering doc sections', critic: 'reviewing doc examples' },
+};
+const GENERIC = { research: 'reading prior work', build: 'drafting a change', plan: 'splitting the next step', critic: 'reviewing a draft' };
+const BEFORE = { research: ['read 6 related files', 'summarized two past incidents'], build: ['read the current module', 'drafted a first patch'], plan: ['split the task in three', 'checked who is free'], critic: ['ran the test suite', 'flagged two edge cases'] };
+const NEXT = { research: 'hand findings to a builder', build: 'hand to a critic after one retry', plan: 'assign the next step', critic: 'approve or send back' };
+const OUTPUT = { research: '3 notes, 2 links', build: '+42 −7 lines', plan: '4 tasks queued', critic: '2 comments' };
+function stepFor(role, i) {
+  const q = sectors[i];
+  return ((q && STEP[q.name]) || GENERIC)[role] || GENERIC[role];
+}
+
+let now = 0, lastTs = 0, sweep = 0;
+let agents = [], departed = [], counters = {}, uid = 0;
+let coreRings = [], ringCollapse = null, ripples = [], notes = [], cables = [], frames = [];
+let landed = new Set(), landGroup = 0, momentumKick = 0, traceSamples = [], lastSample = 0, lastRec = 0, beat = -1;
+let missionText = '', missionT0 = 0, scenario = { t0: 0, i: 0, live: true };
+
+const snapshot = a => ({ sector: a.sector, u: a.u, rho: a.rho, state: a.state, effort: a.effort });
+function makeAgent(role, sector, o = {}) {
+  counters[role] = (counters[role] || 0) + 1;
+  const q = sectors[sector];
+  const a = {
+    id: ++uid, role, call: `${ROLE[role].code}-${counters[role]}`, glyph: ROLE[role].glyph,
+    sector, u: o.u ?? rand(0.15, 0.85), rho: o.rho ?? rand(0.9, 0.97),
+    state: o.state || 'progress', speed: o.speed ?? rand(0.011, 0.018), grind: !!o.grind,
+    stance: o.stance ?? q.stance + rand(-0.02, 0.02),
+    phase: rand(0, TAU), freq: o.freq ?? rand(0.55, 0.85),
+    step: o.step || stepFor(role, sector), effort: 0.5, cost: rand(0.05, 0.6),
+    hold: o.hold || null, acquired: !!o.acquired, born: o.acquired ? now : -99,
+    L: null, refreshedAt: -99, paint: 0, bright: 0, held: false,
+    px: 0, py: 0, vx: 0, vy: 0, rx: 0, ry: 0, boostUntil: 0,
+    trail: [], dots: [], convergeAt: now, strip: null,
+  };
+  a.effort = effortFor(a);
+  a.L = snapshot(a);
+  [a.px, a.py] = basePos(a);
+  a.rx = a.px;
+  a.ry = a.py;
+  agents.push(a);
+  return a;
+}
+
+// the sweep paints an agent: its displayed state catches up with its real state
+function latch(a, force) {
+  if (!force && a.state === 'silent') return;   // no report since last time: nothing to paint
+  a.L = snapshot(a);
+  a.refreshedAt = now;
+  a.paint = 1;
+  if (!a.acquired) {
+    a.acquired = true;
+    [a.px, a.py] = basePos(a);
+    a.rx = a.px;
+    a.ry = a.py;
+    a.vx = a.vy = 0;
+  }
+  a.dots.push([a.rx, a.ry]);
+  if (a.dots.length > 6) a.dots.shift();
+}
+function basePos(a) {
+  const L = a.L || a;
+  if (L.state === 'hold' && a.hold) {
+    const f = sectors[L.sector].fix;
+    return polar(sectorTheta(L.sector, f.u), f.rho);
+  }
+  return polar(sectorTheta(L.sector, L.u), L.rho);
+}
+// every state has a gait
+function gait(a, t) {
+  const L = a.L;
+  if (!L) return [0, 0];
+  if (L.state === 'hold' && a.hold) {
+    // holding pattern: a racetrack around the shared fix, one slot per waiting agent
+    const th = sectorTheta(L.sector, sectors[L.sector].fix.u);
+    const ph = t * TAU / 4.8 + a.hold.phase, big = 15 + a.hold.slot * 4.5, small = 6.5 + a.hold.slot * 2.4;
+    const p = Math.cos(ph) * big, q = Math.sin(ph) * small;
+    return [Math.cos(th) * p + Math.sin(th) * q, Math.sin(th) * p - Math.cos(th) * q];
+  }
+  if (L.state === 'thrash') {
+    const k = a.id * 1.37, amp = REDUCED ? 0.8 : 2.3;
+    const jolt = (t * 0.71 + a.id * 0.13) % 1 < 0.06 ? 2.2 : 0;   // a retry kick
+    return [
+      amp * (Math.sin(t * 61 + k) * 0.7 + Math.sin(t * 89.3 + 2 * k) * 0.45) + jolt,
+      amp * (Math.sin(t * 67.1 + 3 * k) * 0.7 + Math.sin(t * 97.7 + k) * 0.45) - jolt * 0.5,
+    ];
+  }
+  return [0, 0];
+}
+// effort is light: how hard the agent is thinking right now
+function effortFor(a) {
+  const n = 0.5 + 0.5 * Math.sin(now * 0.37 + a.id * 2.1) * Math.sin(now * 0.23 + a.id * 0.7);
+  switch (a.state) {
+    case 'progress': return a.grind ? 0.84 + 0.14 * n : 0.38 + 0.32 * n;
+    case 'converge': return 0.5 + 0.22 * n;
+    case 'hold': return 0.08 + 0.05 * n;
+    case 'thrash': return 0.7 + 0.25 * n;
+    case 'regress': return 0.34;
+    case 'needs': return 0.16;
+    case 'fault': return 0.06;
+    case 'landing': return 0.95;
+    default: return a.effort;
+  }
+}
+function envelope(a) {
+  if (!a.acquired) return 0;
+  let e = 1;
+  const t = now - a.born;
+  if (t >= 0 && t < 0.7) e *= easeOut(t / 0.7);   // attack
+  if (iris) e *= 1 - 0.75 * Math.sin(Math.PI * clamp((now - iris.t0) / 1.25, 0, 1));
+  if (a.state === 'landing') e *= clamp((Math.hypot(a.rx - cx, a.ry - cy) / R - CORE_RHO * 0.85) / 0.22, 0, 1);
+  return e;
+}
+
+// ---------- the scripted fake swarm ----------
+function setupScenario() {
+  agents = []; departed = []; counters = {}; uid = 0;
+  coreRings = []; ringCollapse = null; ripples = []; notes = []; cables = []; frames = [];
+  landed = new Set(); momentumKick = 0; lastSample = now; lastRec = 0;
+  for (const s of [...stripsEl.children]) s.remove();
+  bayEmptyEl.hidden = false;
+  missionText = 'Ship one-tap checkout';
+  missionT0 = now;
+  sectors = [
+    makeSector('docs', 0.08, 0.2, 0.62),
+    makeSector('fraud checks', 0.18, 1.4, 0.66),
+    makeSector('receipts', 0.16, 2.6, 0.7),
+    makeSector('payments', 0.2, 3.8, 0.64),
+    makeSector('tests', 0.18, 5.0, 0.68),
+    makeSector('cart', 0.2, 6.2, 0.72),
+  ];
+  sectorOffset = -0.04;
+  layoutSectors();
+  const A = (role, s, o) => makeAgent(role, s, o);
+
+  // docs: a slow pair; the researcher will go quiet
+  A('research', 0, { u: 0.22, rho: 0.64, speed: 0.005 });
+  A('build', 0, { u: 0.78, rho: 0.82, speed: 0.007 });
+
+  // fraud checks: busy, barely moving, and a critic stuck in a retry loop
+  const fs = sectors[1].stance;
+  A('build', 1, { u: 0.18, rho: 0.55, grind: true, speed: 0.0006, stance: fs - 0.12 });
+  A('research', 1, { u: 0.38, rho: 0.62, grind: true, speed: 0.0006, stance: fs + 0.1 });
+  A('plan', 1, { u: 0.62, rho: 0.5, grind: true, speed: 0.0006, stance: fs - 0.04 });
+  A('build', 1, { u: 0.82, rho: 0.6, grind: true, speed: 0.0006, stance: fs + 0.15 });
+  A('critic', 1, { u: 0.5, rho: 0.7, state: 'thrash', stance: fs, step: 'retrying the risk API' });
+
+  // receipts: four agree, one holds out
+  const rs = sectors[2].stance, rf = sectors[2].freq;
+  for (const [role, u, rho] of [['build', 0.44, 0.33], ['critic', 0.54, 0.31], ['research', 0.5, 0.36], ['build', 0.6, 0.34]]) {
+    A(role, 2, { u, rho, state: 'converge', stance: rs + rand(-0.01, 0.01), freq: rf + rand(-0.02, 0.02), step: 'agreeing on receipts' });
+  }
+  A('plan', 2, { u: 0.3, rho: 0.35, state: 'converge', stance: rs + 0.2, freq: rf + 0.17, step: 'arguing for a later send' });
+
+  // payments: four agents circling, all waiting on the same sandbox; a planner will need you
+  ['build', 'build', 'research', 'critic'].forEach((role, k) => {
+    A(role, 3, { state: 'hold', hold: { slot: k, phase: k * TAU / 4 }, u: 0.5, rho: 0.58, step: 'waiting on payments sandbox' });
+  });
+  A('plan', 3, { u: 0.2, rho: 0.8, speed: 0.004 });
+
+  // tests and cart: streaming inward
+  A('build', 4, { u: 0.25, rho: 0.86, speed: 0.016 });
+  A('critic', 4, { u: 0.52, rho: 0.72, speed: 0.014 });
+  A('build', 4, { u: 0.72, rho: 0.93, speed: 0.018 });
+  A('research', 4, { u: 0.4, rho: 0.58, speed: 0.012 });
+  A('build', 4, { u: 0.86, rho: 0.66, speed: 0.015 });
+  A('build', 5, { u: 0.3, rho: 0.7, speed: 0.016 });
+  A('research', 5, { u: 0.56, rho: 0.9, speed: 0.015 });
+  A('plan', 5, { u: 0.76, rho: 0.62, speed: 0.013 });
+  A('critic', 5, { u: 0.14, rho: 0.82, speed: 0.017 });
+
+  sweep = wrap(-0.55);   // starts just before twelve, so the first rotation paints every contact
+  scenario = { t0: now, i: 0, live: true };
+  traceSamples = Array.from({ length: 240 }, (_, i) =>
+    clamp(0.42 + 0.07 * Math.sin(i * 0.11) + 0.05 * Math.sin(i * 0.37) + (i > 150 && i < 162 ? 0.22 : 0) - (i > 196 ? (i - 196) * 0.004 : 0), 0, 1));
+  updateReadouts();
+}
+
+const byCall = c => agents.find(a => a.call === c);
+const sectorIndex = name => sectors.findIndex(q => q.name === name);
+function needs(call, ask, yes, no) {
+  const a = byCall(call);
+  if (!a || !['progress', 'converge'].includes(a.state)) return;
+  Object.assign(a, { state: 'needs', ask, yes, no, step: 'waiting for you' });
+  latch(a, true);
+  addStrip(a, ask);
+}
+function silence(call) {
+  const a = byCall(call);
+  if (!a || a.state !== 'progress') return;
+  latch(a, true);
+  a.state = 'silent';
+}
+function reject(call) {
+  const a = byCall(call);
+  if (!a || a.state !== 'progress') return;
+  a.state = 'regress';
+  a.step = 'reworking after review';
+  latch(a, true);
+}
+function faultIn(name, msg) {
+  const i = sectorIndex(name);
+  const a = agents.find(b => b.sector === i && b.state === 'progress') || agents.find(b => b.sector === i && b.state === 'converge');
+  if (!a) return;
+  a.state = 'fault';
+  a.step = msg;
+  latch(a, true);
+}
+function retryFaults() {
+  for (const a of agents) if (a.state === 'fault') { a.state = 'progress'; a.step = stepFor(a.role, a.sector); latch(a, true); }
+}
+function calm(call) {
+  const a = byCall(call);
+  if (!a || a.state !== 'thrash') return;
+  a.state = 'progress';
+  a.step = stepFor(a.role, a.sector);
+  latch(a, true);
+}
+function lose(call) {
+  const a = byCall(call);
+  if (!a || a.state !== 'silent') return;
+  agents.splice(agents.indexOf(a), 1);
+  if (hoverAgent === a) hoverAgent = null;
+}
+function unblock(name) {
+  const i = sectorIndex(name);
+  if (i < 0 || sectors[i].handled) return;
+  for (const a of agents) if (a.sector === i && a.state === 'hold') applyDirective(a, 'sandbox is back: charging');
+}
+function ungrind(name) {
+  const i = sectorIndex(name);
+  if (i < 0 || sectors[i].handled) return;
+  for (const a of agents) if (a.sector === i && a.grind) applyDirective(a, stepFor(a.role, i));
+}
+const SCRIPT = [
+  [2.5, () => needs('PLN-3', 'Charge test cards in staging?', 'charging test cards in staging', 'replanning without staging charges')],
+  [6, () => silence('RES-1')],
+  [11, () => reject('BLD-11')],
+  [34, () => faultIn('tests', 'tool crashed: card vault client')],
+  [62, () => retryFaults()],
+  [70, () => calm('CRT-1')],
+  [74, () => lose('RES-1')],
+  [82, () => unblock('payments')],
+  [96, () => ungrind('fraud checks')],
+];
+function runScript() {
+  if (!scenario.live) return;
+  const t = now - scenario.t0;
+  while (scenario.i < SCRIPT.length && SCRIPT[scenario.i][0] <= t) {
+    try { SCRIPT[scenario.i][1](); } catch (err) { console.warn(err); }
+    scenario.i++;
+  }
+}
+
+// ---------- simulation: what is really happening ----------
+function enterConverge(a) {
+  const q = sectors[a.sector];
+  a.state = 'converge';
+  a.convergeAt = now;
+  a.freq = Math.abs(a.stance - q.stance) < 0.06 ? q.freq + rand(-0.02, 0.02) : q.freq + 0.17;
+  a.step = 'agreeing on ' + q.name;
+}
+function stepTrue(a, dt) {
+  const q = sectors[a.sector];
+  switch (a.state) {
+    case 'progress':
+      a.rho = Math.max(0.335, a.rho - a.speed * dt);
+      a.u = clamp(a.u + Math.sin(now * 0.31 + a.id) * 0.004 * dt, 0.06, 0.94);
+      if (a.rho <= 0.34) enterConverge(a);
+      break;
+    case 'converge': {
+      a.rho = Math.max(0.29, a.rho - 0.003 * dt);
+      let su = 0, ss = 0, n = 0;
+      for (const b of agents) if (b !== a && b.sector === a.sector && b.state === 'converge') { su += b.u; ss += b.stance; n++; }
+      if (n) {
+        a.u += (su / n - a.u) * 0.06 * dt;                 // agreeing agents drift together
+        const ms = ss / n;
+        a.stance += (ms - a.stance) * 0.05 * dt;            // and slowly persuade each other
+        if (Math.abs(a.stance - ms) < 0.05) a.freq += (q.freq - a.freq) * Math.min(1, 0.35 * dt);
+      }
+      for (const b of agents) {                              // but keep enough room to stay legible
+        if (b === a || b.sector !== a.sector || b.state !== 'converge') continue;
+        const dpx = (a.u - b.u) * q.w * TAU * a.rho * R, d = Math.hypot(dpx, (a.rho - b.rho) * R);
+        if (d < 18) a.u = clamp(a.u + (dpx >= 0 ? 1 : -1) * (18 - d) / 18 * 0.14 * dt, 0.05, 0.95);
+      }
+      break;
+    }
+    case 'regress':
+      a.rho = Math.min(0.93, a.rho + 0.032 * dt);
+      if (a.rho >= 0.93) { a.state = 'progress'; a.step = stepFor(a.role, a.sector); }
+      break;
+    case 'respawn':
+      if (now >= a.respawnAt) respawn(a);
+      break;
+  }
+  if (a.state !== 'silent') a.effort = effortFor(a);
+  a.cost += a.effort * 0.55 / 3600 * dt * 40;   // the meter runs on sketch time
+}
+// Firefly Lock: Kuramoto coupling, strength = how similar two agents' proposals are
+function stepOscillators(dt) {
+  const K = 2.6;
+  for (const a of agents) {
+    let c = 0, n = 0;
+    if (a.state === 'converge') {
+      for (const b of agents) {
+        if (b === a || b.sector !== a.sector || b.state !== 'converge') continue;
+        const sim = Math.exp(-(((a.stance - b.stance) / 0.07) ** 2));
+        c += sim * Math.sin(b.phase - a.phase);
+        n++;
+      }
+    }
+    a.phase = wrap(a.phase + (TAU * a.freq + (n ? K * c / n : 0)) * dt);
+  }
+}
+function stepConsensus(dt) {
+  sectors.forEach((q, i) => {
+    const pool = agents.filter(a => a.sector === i && a.state === 'converge');
+    q.pool = pool.length;
+    if (pool.length >= 2) {
+      let re = 0, im = 0, ms = 0;
+      for (const a of pool) { re += Math.cos(a.phase); im += Math.sin(a.phase); ms += a.stance; }
+      q.coherence = Math.hypot(re, im) / pool.length;
+      ms /= pool.length;
+      const spread = Math.max(...pool.map(a => Math.abs(a.stance - ms)));
+      q.lock = q.coherence > 0.93 && spread < 0.05 ? q.lock + dt : 0;
+      if (q.lock > 1.8) land(i, pool);
+    } else {
+      q.coherence = 0;
+      q.lock = 0;
+      if (pool.length === 1 && now - pool[0].convergeAt > 12) land(i, pool);
+    }
+  });
+}
+function land(i, pool) {
+  const g = ++landGroup;
+  for (const a of pool) {
+    a.state = 'landing';
+    a.rho = 0.02;
+    a.landGroup = g;
+    a.step = 'landing in the core';
+    latch(a, true);
+    a.boostUntil = now + 4;
+  }
+  sectors[i].lock = 0;
+  sectors[i].stance += 0.31;   // the next piece of work starts a new argument
+  momentumKick += 0.5 + 0.12 * pool.length;
+}
+function absorb(a) {
+  if (!landed.has(a.landGroup)) {
+    landed.add(a.landGroup);
+    coreRings.push({ t0: now });
+    ripples.push({ kind: 'core', t0: now });
+  }
+  a.state = 'respawn';
+  a.respawnAt = now + rand(2, 4.5);
+  a.trail = [];
+  a.dots = [];
+  if (hoverAgent === a) hoverAgent = null;
+}
+function respawn(a) {
+  const q = sectors[a.sector];
+  Object.assign(a, {
+    state: 'progress', u: rand(0.12, 0.88), rho: rand(0.93, 0.98), speed: rand(0.011, 0.019), grind: false,
+    stance: q.stance + (Math.random() < 0.22 ? 0.2 : rand(-0.02, 0.02)),
+    phase: rand(0, TAU), freq: rand(0.55, 0.85), step: stepFor(a.role, a.sector), born: now, acquired: true,
+  });
+  latch(a, true);
+  [a.px, a.py] = basePos(a);
+  a.vx = a.vy = 0;
+  a.rx = a.px;
+  a.ry = a.py;
+  a.trail = [];
+  a.dots = [];
+}
+// The Sweep: the swarm's clock. State is latched as the sweep passes; silent agents get no repaint.
+function stepSweep(dt) {
+  const prev = sweep;
+  sweep = wrap(sweep + TAU * dt / SWEEP_PERIOD);
+  const span = wrap(sweep - prev);
+  for (const a of agents) {
+    if (a.state === 'respawn') continue;
+    const th = trueTheta(a.sector, a.state === 'hold' && a.hold ? sectors[a.sector].fix.u : a.u);
+    const d = wrap(th - prev);
+    if (d > 0 && d <= span) latch(a, false);
+  }
+}
+// ---------- display physics: what the eye sees ----------
+function stepDisplay(a, dt) {
+  if (a.state === 'respawn' || !a.acquired) return;
+  if (a.held) {
+    const k = 1 - Math.exp(-dt * 30);
+    a.px += (pointer.sx - a.px) * k;
+    a.py += (pointer.sy - a.py) * k;
+    a.vx = a.vy = 0;
+  } else {
+    const [bx, by] = basePos(a), w = now < a.boostUntil ? 4.2 : 1.7;   // critically damped: no teleports, no bounce
+    a.vx += (w * w * (bx - a.px) - 2 * w * a.vx) * dt;
+    a.vy += (w * w * (by - a.py) - 2 * w * a.vy) * dt;
+    a.px += a.vx * dt;
+    a.py += a.vy * dt;
+  }
+  const [gx, gy] = a.held ? [0, 0] : gait(a, now);
+  a.rx = a.px + gx;
+  a.ry = a.py + gy;
+  a.trail.push([a.rx, a.ry, now]);
+  while (a.trail.length > 2 && now - a.trail[0][2] > 0.75) a.trail.shift();
+  // brightness: effort times phosphor persistence, with peak-meter ballistics
+  const since = now - a.refreshedAt;
+  const persist = since < SWEEP_PERIOD * 1.3 ? 1 : Math.max(0.035, Math.exp(-(since - SWEEP_PERIOD * 1.3) / 3.2));
+  const target = clamp(a.L.effort * persist + a.paint * 0.22, 0, 1.2);
+  a.bright += (target - a.bright) * (target > a.bright ? 1 - Math.exp(-dt / 0.06) : 1 - Math.exp(-dt / 0.9));
+  a.paint *= Math.exp(-dt / 0.32);
+  if (a.state === 'landing' && Math.hypot(a.rx - cx, a.ry - cy) < CORE_RHO * R * 0.95) absorb(a);
+}
+function stepDeparted(dt) {
+  for (let i = departed.length - 1; i >= 0; i--) {
+    const d = departed[i];
+    if (d.mode === 'stopped') {
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      const f = Math.exp(-dt / 0.16);
+      d.vx *= f;
+      d.vy *= f;
+    } else {
+      const [th] = toPolar(d.x, d.y);
+      d.x += Math.sin(th) * 16 * dt;
+      d.y -= Math.cos(th) * 16 * dt;
+    }
+    d.x = clamp(d.x, 14, W - 14);
+    d.y = clamp(d.y, 14, H - 14);
+    if (now - d.t0 > SWEEP_PERIOD) departed.splice(i, 1);   // the afterglow is gone: so is the undo
+  }
+}
+function stepMetrics(dt) {
+  momentumKick *= Math.exp(-dt / 1.6);
+  if (now - lastSample >= 0.25) {
+    lastSample = now;
+    let m = 0;
+    for (const a of agents) {
+      if (a.state === 'progress' && !a.grind) m += a.speed;
+      else if (a.state === 'converge') m += 0.004;
+    }
+    traceSamples.push(clamp(m / 0.24 + momentumKick * 0.35, 0, 1));
+    if (traceSamples.length > 240) traceSamples.shift();
+  }
+  const b = Math.floor(now);   // readouts change on the beat, not on every token
+  if (b !== beat) { beat = b; updateReadouts(); }
+}
+function agreement() {
+  let sum = 0, wsum = 0;
+  sectors.forEach((q, i) => {
+    const xs = agents.filter(a => a.sector === i && !['respawn', 'silent', 'fault'].includes(a.state)).map(a => a.stance);
+    if (xs.length < 2) return;
+    const m = xs.reduce((s, x) => s + x, 0) / xs.length;
+    const sd = Math.sqrt(xs.reduce((s, x) => s + (x - m) ** 2, 0) / xs.length);
+    sum += Math.exp(-((sd / 0.07) ** 2)) * xs.length;
+    wsum += xs.length;
+  });
+  return wsum ? sum / wsum : 0;
+}
+function updateReadouts() {
+  agentsEl.textContent = `${agents.length} of ${CAP}`;
+  agentsEl.classList.toggle('alert', agents.length >= CAP);
+  let spend = 0;
+  for (const a of agents) spend += (a.state === 'respawn' ? 0.2 : a.effort) * 0.55;
+  spendEl.textContent = '$' + spend.toFixed(2) + '/h';
+  spendEl.classList.toggle('alert', spend > 10);
+  const lit = Math.round(agreement() * 10);
+  [...ladderEl.children].forEach((seg, i) => seg.classList.toggle('on', i < lit));
+}
+function record() {
+  if (now - lastRec < 0.25) return;
+  lastRec = now;
+  frames.push({
+    t: now,
+    rings: coreRings.length,
+    a: agents.filter(a => a.acquired && a.state !== 'respawn').map(a => [
+      (a.rx - cx) / R, (a.ry - cy) / R, Math.min(1, a.bright), a.glyph,
+      a.state === 'needs' ? 1 : a.state === 'fault' ? 2 : 0, envelope(a),
+    ]),
+  });
+  if (frames.length > 260) frames.shift();
+}
+
+// ---------- commands ----------
+function applyDirective(a, text) {
+  const s = a.state;
+  if (['hold', 'thrash', 'regress', 'fault', 'silent'].includes(s)) {
+    if (s === 'hold') {
+      const f = sectors[a.sector].fix;
+      a.u = clamp(f.u + rand(-0.28, 0.28), 0.08, 0.92);
+      a.rho = f.rho + rand(-0.04, 0.04);
+    }
+    a.state = 'progress';
+    a.hold = null;
+    a.speed = rand(0.015, 0.022);
+  }
+  if (a.grind) {
+    a.grind = false;
+    a.speed = rand(0.012, 0.018);
+    a.stance = sectors[a.sector].stance + rand(-0.02, 0.02);
+  }
+  if (a.state !== 'needs' && a.state !== 'landing') a.step = text.length > 34 ? text.slice(0, 33) + '…' : text;
+  latch(a, true);
+  a.boostUntil = now + 1.4;
+}
+function sectorDirective(i, text, x, y) {
+  const [, rho] = toPolar(x, y);
+  notes.push({ text, x, y, t0: now });
+  ripples.push({ kind: 'wedge', sector: i, rho, t0: now });
+  sectors[i].handled = true;
+  for (const a of agents) if (a.sector === i && a.state !== 'respawn' && a.state !== 'landing') applyDirective(a, text);
+}
+function agentDirective(a, text) {
+  notes.push({ text, agent: a, t0: now });
+  ripples.push({ kind: 'blip', agent: a, t0: now });
+  applyDirective(a, text);
+}
+function decompose(text) {
+  const t = text.toLowerCase();
+  const sets = [
+    [/(sign[ -]?in|login|log in|auth|password)/, ['sign-in flow', 'sessions', 'email links', 'security review', 'tests']],
+    [/(search|index|query)/, ['indexing', 'ranking', 'query ui', 'latency', 'tests']],
+    [/(checkout|pay|cart|billing|price)/, ['cart', 'payments', 'fraud checks', 'receipts', 'tests']],
+    [/(doc|write|guide|blog|post)/, ['outline', 'draft', 'examples', 'review']],
+    [/(bug|fix|crash|error|incident|outage)/, ['reproduce', 'root cause', 'patch', 'regression tests']],
+  ];
+  for (const [re, names] of sets) if (re.test(t)) return names;
+  return ['research', 'design', 'build', 'test', 'ship'];
+}
+function newMission(text) {
+  cancelDrag();
+  closeFlight();
+  iris = { t0: now, next: decompose(text), swapped: false };
+  pendingMission = text;
+  ringCollapse = { t0: now };
+  ripples.push({ kind: 'core', t0: now + 0.4 });
+}
+function stepIris() {
+  if (!iris) return;
+  const t = now - iris.t0;
+  if (!iris.swapped && t >= 0.4) { iris.swapped = true; applyMission(pendingMission, iris.next); }
+  if (t > 1.3) iris = null;
+}
+function applyMission(text, names) {
+  missionText = text;
+  missionT0 = now;
+  scenario.live = false;   // the script stops: the swarm is yours now
+  sectors = names.map((name, i) => makeSector(name, 1 / names.length, i * 1.7 + rand(0, 0.1), 0.64 + 0.035 * i));
+  sectorOffset = -0.5 / names.length;
+  layoutSectors();
+  for (const s of [...stripsEl.children]) s.remove();
+  bayEmptyEl.hidden = false;
+  tether = null;
+  agents = agents.filter(a => a.state !== 'silent');
+  agents.forEach((a, i) => {
+    const s = i % names.length;
+    Object.assign(a, {
+      sector: s, u: rand(0.12, 0.88), rho: rand(0.9, 0.98), state: 'progress', hold: null, grind: false,
+      speed: rand(0.012, 0.02), strip: null, stance: sectors[s].stance + (Math.random() < 0.2 ? 0.2 : rand(-0.02, 0.02)),
+      phase: rand(0, TAU), freq: rand(0.55, 0.85), step: stepFor(a.role, s), acquired: true, trail: [], dots: [],
+    });
+    latch(a, true);
+    a.boostUntil = now + 1.5;
+  });
+}
+function spawnAgent(role, s, u) {
+  const a = makeAgent(role, s, { u, rho: 0.95, acquired: true });
+  latch(a, true);
+  ripples.push({ kind: 'blip', agent: a, t0: now + 0.05 });
+  return a;
+}
+function depart(a, mode, vx, vy, x = a.rx, y = a.ry) {
+  const i = agents.indexOf(a);
+  if (i < 0) return;
+  agents.splice(i, 1);
+  if (a.strip) { removeStrip(a.strip); a.strip = null; }
+  departed.push({ a, mode, x, y, vx: vx * 0.5, vy: vy * 0.5, t0: now, snap: { sector: a.sector, u: a.u, rho: a.rho, state: a.state } });
+  if (hoverAgent === a) hoverAgent = null;
+}
+function undoDepart(d) {
+  departed.splice(departed.indexOf(d), 1);
+  const a = d.a;
+  Object.assign(a, d.snap);
+  if (!sectors[a.sector]) a.sector = 0;
+  a.px = d.x;
+  a.py = d.y;
+  a.vx = a.vy = 0;
+  a.trail = [];
+  a.boostUntil = now + 1.5;
+  agents.push(a);
+  latch(a, true);
+  if (a.state === 'needs') addStrip(a, a.ask);
+  ripples.push({ kind: 'blip', agent: a, t0: now });
+}
+const departedAt = (x, y) => departed.find(d => Math.hypot(d.x - x, d.y - y) < 16);
+function reassign(a, s, u) {
+  if (['hold', 'converge', 'thrash', 'regress'].includes(a.state)) a.state = 'progress';
+  Object.assign(a, {
+    sector: s, u: clamp(u, 0.06, 0.94), rho: 0.93, hold: null, grind: false, speed: rand(0.012, 0.018),
+    stance: sectors[s].stance + rand(-0.02, 0.02), step: stepFor(a.role, s),
+  });
+  latch(a, true);
+  a.boostUntil = now + 2;
+  ripples.push({ kind: 'blip', agent: a, t0: now + 0.4 });
+}
+function moveAcross(a, s, toPrev) {
+  if (a.state === 'hold') a.rho = sectors[a.sector].fix.rho;
+  if (a.state === 'hold' || a.state === 'converge') a.state = 'progress';
+  Object.assign(a, {
+    sector: s, u: toPrev ? rand(0.8, 0.94) : rand(0.06, 0.2), hold: null, grind: false, speed: Math.max(a.speed, 0.012),
+    stance: sectors[s].stance + rand(-0.02, 0.02), step: stepFor(a.role, s),
+  });
+  latch(a, true);
+  a.boostUntil = now + 0.5;
+}
+// who would cross a moved sector edge, if attention follows width
+function plannedMovers(p, q) {
+  const movable = a => ['progress', 'converge', 'hold', 'thrash', 'regress'].includes(a.state) && !a.held;
+  const effU = a => (a.state === 'hold' ? sectors[a.sector].fix.u : a.u);
+  const A = agents.filter(a => a.sector === p && movable(a)), B = agents.filter(a => a.sector === q && movable(a));
+  const total = A.length + B.length;
+  if (!total) return [];
+  const targetA = Math.round(total * sectors[p].w / (sectors[p].w + sectors[q].w));
+  if (targetA > A.length) return B.sort((x, y) => effU(x) - effU(y)).slice(0, targetA - A.length).map(a => [a, p]);
+  if (targetA < A.length) return A.sort((x, y) => effU(y) - effU(x)).slice(0, A.length - targetA).map(a => [a, q]);
+  return [];
+}
+
+// ---------- strips ----------
+function addStrip(a, ask) {
+  const s = el('div', 'strip paper'), head = el('div', 'head');
+  head.append(el('span', '', a.call), el('span', '', a.role), el('span', '', sectors[a.sector].name));
+  s.append(head, el('div', 'ask', ask), el('div', 'how', 'Drag it into the scope to allow. Flick it right to deny.'));
+  s.style.setProperty('--holder', 'var(--amber)');
+  s.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try { s.setPointerCapture(e.pointerId); } catch {}
+    updatePointer(e);
+    if (puck) cancelPuck();
+    drag = { kind: 'strip', el: s, agent: a, x0: e.clientX, y0: e.clientY };
+    s.style.transition = 'none';
+    s.style.cursor = 'grabbing';
+    tether = null;
+  });
+  s.addEventListener('pointerenter', () => { if (!drag) tether = { el: s, a }; });
+  s.addEventListener('pointerleave', () => { if (tether && tether.el === s) tether = null; });
+  stripsEl.append(s);
+  a.strip = s;
+  void s.offsetWidth;   // commit the off-screen position first, so the slide-in transition runs
+  s.classList.add('in');
+  bayEmptyEl.hidden = true;
+}
+function removeStrip(s) {
+  s.remove();
+  if (tether && tether.el === s) tether = null;
+  bayEmptyEl.hidden = stripsEl.children.length > 0;
+}
+function approve(s, a) {
+  const r = s.getBoundingClientRect(), alive = agents.includes(a);
+  const tx = (alive ? scopeRect.left + a.rx : r.left) - (r.left + r.width / 2);
+  const ty = (alive ? scopeRect.top + a.ry : r.top) - (r.top + r.height / 2);
+  s.style.transition = 'transform .4s cubic-bezier(.55,0,.75,.35), opacity .4s ease-in';
+  s.style.transform = `translate(${tx}px, ${ty}px) scale(.06)`;
+  s.style.opacity = '0';
+  setTimeout(() => removeStrip(s), 420);
+  a.strip = null;
+  if (alive) {
+    a.state = 'progress';
+    a.speed = rand(0.012, 0.017);
+    a.step = a.yes || stepFor(a.role, a.sector);
+    latch(a, true);
+    ripples.push({ kind: 'blip', agent: a, t0: now + 0.38 });
+  }
+}
+function deny(s, a) {
+  s.style.transition = 'transform .32s ease-out, opacity .32s';
+  s.style.transform = 'translateX(120%) rotate(5deg)';
+  s.style.opacity = '0';
+  setTimeout(() => removeStrip(s), 340);
+  a.strip = null;
+  if (agents.includes(a)) {
+    a.state = 'regress';
+    a.step = a.no || 'replanning';
+    latch(a, true);
+  }
+}
+function openFlight(a) {
+  if (!press || press.agent !== a || drag) return;
+  press.open = true;
+  hoverAgent = null;
+  const q = sectors[a.sector], head = el('div', 'head');
+  head.append(el('span', '', a.call), el('span', '', a.role), el('span', '', q ? q.name : ''));
+  const row = (k, v) => { const r = el('div', 'row'); r.append(el('span', 'k', k), el('span', 'v', v)); return r; };
+  const nowText = a.state === 'silent' ? `no report for ${Math.round(now - a.refreshedAt)} s` : a.step;
+  flightEl.replaceChildren(head, row('now', nowText), row('before', BEFORE[a.role].join('\n')), row('next', NEXT[a.role]), row('output', OUTPUT[a.role]));
+  flightEl.style.setProperty('--holder', a.state === 'needs' ? 'var(--amber)' : a.state === 'fault' ? 'var(--cerise)' : '#6f675c');
+  flightEl.style.left = Math.min(innerWidth - 292, scopeRect.left + a.rx + 18) + 'px';
+  flightEl.style.top = Math.min(innerHeight - 180, scopeRect.top + a.ry + 12) + 'px';
+  flightEl.classList.add('open');
+}
+function closeFlight() { flightEl.classList.remove('open'); }
+
+// ---------- rendering: the scope ----------
+function arcText(c, text, mid, r, color) {
+  c.save();
+  c.font = F_LEGEND;
+  c.fillStyle = color;
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  const chars = [...text], gap = 0.6, ws = chars.map(ch => c.measureText(ch).width + gap);
+  const total = ws.reduce((s, w) => s + w, 0) - gap;
+  const bottom = Math.cos(mid) < 0, dir = bottom ? -1 : 1;   // keep the bottom labels upright
+  let ang = mid - dir * total / r / 2;
+  chars.forEach((ch, i) => {
+    const a = ang + dir * (ws[i] - gap) / 2 / r;
+    const [x, y] = polar(a, r / R);
+    c.save();
+    c.translate(x, y);
+    c.rotate(bottom ? a + Math.PI : a);
+    c.fillText(ch, 0, 0);
+    c.restore();
+    ang += dir * ws[i] / r;
+  });
+  c.restore();
+}
+function wrapText(c, text, maxW, maxLines = 3) {
+  const words = text.split(/\s+/).filter(Boolean), lines = [];
+  let line = '';
+  for (const w of words) {
+    const t = line ? line + ' ' + w : w;
+    if (c.measureText(t).width <= maxW || !line) line = t;
+    else { lines.push(line); line = w; }
+  }
+  if (line) lines.push(line);
+  if (lines.length > maxLines) {
+    lines.length = maxLines;
+    lines[maxLines - 1] = lines[maxLines - 1].replace(/\s*\S*$/, '') + '…';
+  }
+  return lines;
+}
+function currentTarget() {
+  if (puck) return puckTarget();
+  if (drag && drag.kind === 'spawn' && drag.target) return { kind: 'sector', sector: drag.target.sector };
+  if (drag && drag.kind === 'agent' && drag.dest) return { kind: 'sector', sector: drag.dest.sector };
+  return null;
+}
+function drawBezel(c, tgt) {
+  c.save();
+  c.lineWidth = 6;
+  c.strokeStyle = 'rgba(0,0,0,.55)';
+  c.beginPath(); c.arc(cx, cy, R + 3, 0, TAU); c.stroke();
+  c.lineWidth = 1;
+  c.strokeStyle = 'rgba(255,238,214,.05)';
+  c.beginPath(); c.arc(cx, cy, R + 6.5, 0, TAU); c.stroke();
+  for (let d = 0; d < 360; d += 5) {
+    const th = d / 180 * Math.PI, long = d % 30 === 0;
+    const [x0, y0] = polar(th, (R + 10) / R), [x1, y1] = polar(th, (R + (long ? 17 : 13)) / R);
+    c.strokeStyle = rgba(LEGEND, long ? 0.42 : 0.2);
+    c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+  }
+  sectors.forEach((q, i) => {
+    const [st, w] = geom(i), th = st * TAU;
+    const hot = (drag && drag.kind === 'spoke' && drag.k === i) || hoverSpoke === i;
+    c.strokeStyle = hot ? rgba(PHOS, 0.85) : rgba(LEGEND, 0.7);
+    c.lineWidth = hot ? 2.2 : 1.6;
+    const [x0, y0] = polar(th, (R + 8) / R), [x1, y1] = polar(th, (R + 21) / R);
+    c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+    const lit = tgt && tgt.kind === 'sector' && tgt.sector === i;
+    if (w > 0.02) arcText(c, q.name, (st + w / 2) * TAU, R + 33, lit ? rgba(PHOS, 0.92) : rgba(LEGEND, 0.95));
+  });
+  c.restore();
+}
+function drawPrinted(c) {
+  c.save();
+  c.fillStyle = GLASS;
+  c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.fill();
+  c.lineWidth = 1;
+  for (const r of RINGS) { c.strokeStyle = rgba(PRINT, 0.13); c.beginPath(); c.arc(cx, cy, r * R, 0, TAU); c.stroke(); }
+  c.strokeStyle = rgba(PRINT, 0.24);
+  c.beginPath(); c.arc(cx, cy, CORE_RHO * R, 0, TAU); c.stroke();
+  sectors.forEach((q, i) => {
+    const th = geom(i)[0] * TAU, hot = (drag && drag.kind === 'spoke' && drag.k === i) || hoverSpoke === i;
+    const [x0, y0] = polar(th, CORE_RHO), [x1, y1] = polar(th, 1);
+    c.strokeStyle = hot ? rgba(PRINT, 0.42) : rgba(PRINT, 0.13);
+    c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+  });
+  c.font = F_LEGEND_S;
+  c.fillStyle = rgba(PRINT, 0.32);
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  for (const [name, rho] of [['explore', 0.875], ['draft', 0.625], ['verify', 0.4]]) c.fillText(name, cx, cy - rho * R);
+  c.restore();
+}
+function drawWash(c, tgt) {
+  if (!tgt || tgt.kind !== 'sector' || !sectors[tgt.sector]) return;
+  const [st, w] = geom(tgt.sector), a0 = st * TAU - Math.PI / 2, a1 = (st + w) * TAU - Math.PI / 2;
+  c.beginPath();
+  c.arc(cx, cy, R, a0, a1);
+  c.arc(cx, cy, CORE_RHO * R, a1, a0, true);
+  c.closePath();
+  c.fillStyle = rgba(PHOS, 0.045);
+  c.fill();
+}
+function drawSweep(c) {
+  const a = sweep - Math.PI / 2, wedge = 0.62;
+  if (c.createConicGradient) {
+    const g = c.createConicGradient(a - wedge, cx, cy), f = wedge / TAU;
+    g.addColorStop(0, rgba(PHOS, 0));
+    g.addColorStop(f * 0.999, rgba(PHOS, 0.075));
+    g.addColorStop(f, rgba(PHOS, 0));
+    g.addColorStop(1, rgba(PHOS, 0));
+    c.fillStyle = g;
+    c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.fill();
+  }
+  const [x0, y0] = polar(sweep, CORE_RHO), [x1, y1] = polar(sweep, 1);
+  c.strokeStyle = rgba(PHOS, 0.34);
+  c.lineWidth = 1;
+  c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+}
+function drawCoreRings(c, n, live) {
+  const base = CORE_RHO * R;
+  let squeeze = 1, fade = 1;
+  if (live && ringCollapse) {
+    const p = (now - ringCollapse.t0) / 0.55;
+    if (p >= 1) { coreRings = []; ringCollapse = null; return; }
+    squeeze = 1 - easeInOut(p);
+    fade = 1 - p;
+  }
+  const shown = Math.min(n, 18);
+  c.lineWidth = 1;
+  for (let i = 0; i < shown; i++) {
+    const ring = live ? coreRings[n - shown + i] : null;
+    const flash = ring ? Math.exp(-(now - ring.t0) / 0.7) : 0;
+    c.strokeStyle = rgba(PHOS, (0.14 + 0.6 * flash) * fade);
+    c.beginPath(); c.arc(cx, cy, base + (3.5 + i * 2.7) * squeeze, 0, TAU); c.stroke();
+  }
+}
+function drawRipples(c) {
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    const rp = ripples[i], t = now - rp.t0;
+    if (t < 0) continue;
+    if (t > 1.6) { ripples.splice(i, 1); continue; }
+    const p = t / 1.6;
+    c.lineWidth = 1.2;
+    c.strokeStyle = rgba(PHOS, (1 - p) * 0.55);
+    if (rp.kind === 'core') {
+      c.beginPath(); c.arc(cx, cy, CORE_RHO * R + p * R * 0.84, 0, TAU); c.stroke();
+    } else if (rp.kind === 'wedge' && sectors[rp.sector]) {
+      const [st, w] = geom(rp.sector), a0 = st * TAU - Math.PI / 2, a1 = (st + w) * TAU - Math.PI / 2;
+      for (const r of [rp.rho * R + p * R * 0.45, rp.rho * R - p * R * 0.45]) {
+        if (r > CORE_RHO * R && r < R) { c.beginPath(); c.arc(cx, cy, r, a0, a1); c.stroke(); }
+      }
+    } else if (rp.kind === 'blip' && rp.agent) {
+      c.beginPath(); c.arc(rp.agent.rx, rp.agent.ry, 6 + p * 34, 0, TAU); c.stroke();
+    }
+  }
+}
+function drawAgent(c, a) {
+  if (a.state === 'respawn' || !a.acquired) return;
+  const env = envelope(a);
+  if (env <= 0.01) return;
+  const col = a.state === 'needs' ? AMBER : a.state === 'fault' ? CERISE : PHOS;
+  const sprite = a.state === 'needs' ? GLOW.amber : a.state === 'fault' ? GLOW.fault : GLOW.phos;
+  const b = clamp(a.bright, 0, 1.2);
+  // history dots: one per paint, like radar
+  for (let i = 0; i < a.dots.length - 1; i++) {
+    const [x, y] = a.dots[i], k = (i + 1) / a.dots.length;
+    c.fillStyle = rgba(PHOS, (0.06 + 0.24 * k) * Math.min(1, b + 0.25) * env);
+    c.beginPath(); c.arc(x, y, 1.3, 0, TAU); c.fill();
+  }
+  // comet tail: the last moment of travel
+  const tr = a.trail;
+  c.lineWidth = 1.3;
+  for (let i = 1; i < tr.length; i++) {
+    const k = i / tr.length;
+    c.strokeStyle = rgba(col, k * 0.38 * (0.3 + b) * env);
+    c.beginPath(); c.moveTo(tr[i - 1][0], tr[i - 1][1]); c.lineTo(tr[i][0], tr[i][1]); c.stroke();
+  }
+  // halo: effort, plus the oscillator that does the Firefly Lock
+  const pulse = (0.5 + 0.5 * Math.cos(a.phase)) ** 4, conv = a.state === 'converge';
+  let halo;
+  if (a.state === 'needs') halo = 0.35 + 0.65 * amberPulse(now);
+  else if (a.state === 'fault') halo = faultOn(now) ? 1 : 0.08;
+  else if (REDUCED) halo = b * 0.8;
+  else halo = b * (conv ? 0.42 + 0.9 * pulse : 0.72 + 0.22 * pulse);
+  glow(c, sprite, a.rx, a.ry, 14 + 30 * halo, Math.min(1, halo) * env * 0.9);
+  // glyph: shape is role
+  const ga = a.state === 'fault' ? (faultOn(now) ? 1 : 0.35) : 0.38 + 0.62 * Math.min(1, b + (conv && !REDUCED ? pulse * 0.35 : 0));
+  c.strokeStyle = rgba(col, ga * env);
+  c.lineWidth = 1.5;
+  glyphPath(c, a.glyph, a.rx, a.ry, GLYPH);
+  c.stroke();
+  // velocity vector: where it is heading
+  if ((a.state === 'progress' && !a.grind) || a.state === 'regress') {
+    const [th] = toPolar(a.rx, a.ry), dir = a.state === 'regress' ? 1 : -1;
+    const len = 5 + a.speed * 520 * (a.state === 'regress' ? 1.6 : 1);
+    const ux = Math.sin(th) * dir, uy = -Math.cos(th) * dir;
+    c.strokeStyle = rgba(PHOS, 0.42 * env * (0.5 + Math.min(1, b)));
+    c.lineWidth = 1;
+    c.beginPath(); c.moveTo(a.rx + ux * 8, a.ry + uy * 8); c.lineTo(a.rx + ux * (8 + len), a.ry + uy * (8 + len)); c.stroke();
+  }
+}
+function drawReducedHalos(c) {
+  // with reduced motion, a locked group shares one steady halo instead of pulsing together
+  sectors.forEach((q, i) => {
+    if (q.pool < 2 || q.coherence < 0.9) return;
+    const pool = agents.filter(a => a.sector === i && a.state === 'converge');
+    const mx = pool.reduce((s, a) => s + a.rx, 0) / pool.length, my = pool.reduce((s, a) => s + a.ry, 0) / pool.length;
+    const r = Math.max(...pool.map(a => Math.hypot(a.rx - mx, a.ry - my))) + 14;
+    c.strokeStyle = rgba(PHOS, 0.35);
+    c.lineWidth = 1;
+    c.beginPath(); c.arc(mx, my, r, 0, TAU); c.stroke();
+  });
+}
+function drawDepartedGlow(c) {
+  for (const d of departed) {
+    const t = now - d.t0, al = clamp(1 - t / SWEEP_PERIOD, 0, 1), flash = d.mode === 'stopped' ? Math.exp(-t / 0.15) : 0;
+    glow(c, GLOW.phos, d.x, d.y, 16 + 22 * al + 30 * flash, 0.25 * al + flash);
+    c.setLineDash([2, 3]);
+    c.strokeStyle = rgba(PHOS, 0.5 * al);
+    c.lineWidth = 1.3;
+    glyphPath(c, d.a.glyph, d.x, d.y, GLYPH);
+    c.stroke();
+    c.setLineDash([]);
+  }
+}
+function drawDepartedLabels(c) {
+  c.font = F_LEGEND;
+  c.textBaseline = 'middle';
+  for (const d of departed) {
+    const al = clamp(1 - (now - d.t0) / SWEEP_PERIOD, 0, 1);
+    const text = d.mode === 'stopped' ? 'stopped, click to undo' : 'finishing its step, click to undo';
+    const right = d.x + 13 + c.measureText(text).width < W - 6;   // keep the label on the glass side that has room
+    c.textAlign = right ? 'left' : 'right';
+    c.fillStyle = rgba(LEGEND, al);
+    c.fillText(text, d.x + (right ? 13 : -13), d.y);
+  }
+}
+function drawMission(c) {
+  const px = clamp(Math.round(R * 0.052), 12, 16);
+  c.save();
+  c.font = handFont(px);
+  c.textBaseline = 'middle';
+  c.textAlign = 'left';
+  const lines = wrapText(c, missionText, CORE_RHO * R * 1.7);
+  let left = Math.floor((now - missionT0) / 0.03);   // inks in a letter at a time
+  const lh = px * 1.3, y0 = cy - (lines.length - 1) * lh / 2;
+  c.fillStyle = rgba(PHOS, 0.95);
+  c.shadowColor = 'rgba(242,230,207,.4)';
+  c.shadowBlur = 9;
+  lines.forEach((ln, i) => {
+    const wFull = c.measureText(ln).width, part = ln.slice(0, Math.max(0, left));
+    left -= ln.length + 1;
+    if (part) c.fillText(part, cx - wFull / 2, y0 + i * lh);
+  });
+  c.restore();
+}
+function drawNotes(c) {
+  c.save();
+  c.font = handFont(13);
+  c.textAlign = 'left';
+  c.textBaseline = 'middle';
+  for (let i = notes.length - 1; i >= 0; i--) {
+    const n = notes[i], t = now - n.t0;
+    if (t > 8) { notes.splice(i, 1); continue; }
+    const al = t < 0.3 ? t / 0.3 : t > 6.5 ? (8 - t) / 1.5 : 1;
+    const x = n.agent ? n.agent.rx + 14 : n.x + 12, y = n.agent ? n.agent.ry + 18 : n.y + 18;
+    c.fillStyle = rgba(PHOS, 0.72 * al);
+    c.fillText(n.text, Math.min(x, W - c.measureText(n.text).width - 8), y);
+  }
+  c.restore();
+}
+function drawFeedforward(c, tgt) {
+  c.save();
+  if (puck && tgt) {
+    if (tgt.kind === 'core') {
+      glow(c, GLOW.phos, cx, cy, CORE_RHO * R * 3.2, 0.14);
+      c.strokeStyle = rgba(PHOS, 0.6);
+      c.lineWidth = 1.5;
+      c.beginPath(); c.arc(cx, cy, CORE_RHO * R + 2, 0, TAU); c.stroke();
+    } else if (tgt.kind === 'agent') {
+      c.strokeStyle = rgba(PHOS, 0.75);
+      c.lineWidth = 1.3;
+      c.beginPath(); c.arc(tgt.agent.rx, tgt.agent.ry, 13, 0, TAU); c.stroke();
+    }
+  }
+  if (drag && drag.kind === 'spawn') {
+    c.setLineDash([2, 2.5]);
+    c.strokeStyle = rgba(PHOS, 0.75);
+    c.lineWidth = 1.2;
+    for (const th of drag.ghosts) { const [x, y] = polar(th, 0.95); glyphPath(c, ROLE[drag.role].glyph, x, y, GLYPH); c.stroke(); }
+    c.setLineDash([]);
+  }
+  if (drag && drag.kind === 'agent') {
+    if (drag.outside && inScope()) {
+      // the membrane lights where the agent is crossing out
+      const [th] = toPolar(pointer.sx, pointer.sy);
+      c.strokeStyle = rgba(PHOS, 0.55);
+      c.lineWidth = 2;
+      c.beginPath(); c.arc(cx, cy, R, th - Math.PI / 2 - 0.22, th - Math.PI / 2 + 0.22); c.stroke();
+    } else if (drag.dest) {
+      const [x, y] = polar(drag.dest.th, 0.93);
+      c.setLineDash([2, 2.5]);
+      c.strokeStyle = rgba(PHOS, 0.75);
+      c.lineWidth = 1.2;
+      glyphPath(c, drag.agent.glyph, x, y, GLYPH);
+      c.stroke();
+      c.setLineDash([]);
+    }
+  }
+  if (drag && drag.kind === 'spoke') {
+    const d = drag;
+    c.font = F_READOUT_M;
+    c.fillStyle = rgba(PHOS, 0.86);
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    for (const i of [d.prev, d.k]) {
+      const [st, w] = geom(i), [x, y] = polar((st + w / 2) * TAU, 0.88);
+      c.fillText(Math.round(sectors[i].w * 100) + '%', x, y);
+    }
+    c.setLineDash([2, 3]);
+    c.strokeStyle = rgba(PHOS, 0.6);
+    c.lineWidth = 1;
+    for (const [a] of d.movers) { c.beginPath(); c.arc(a.rx, a.ry, 11, 0, TAU); c.stroke(); }
+    c.setLineDash([]);
+    if (d.snap !== null) {
+      // a detent: the edge clicks into place
+      const th = sectors[d.k].start * TAU, [x0, y0] = polar(th, CORE_RHO), [x1, y1] = polar(th, 1);
+      c.strokeStyle = rgba(PHOS, 0.25 + 0.6 * Math.exp(-(now - d.snapT) / 0.12));
+      c.lineWidth = 1.5;
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+    }
+  }
+  c.restore();
+}
+function dataLines(a) {
+  const step = a.state === 'silent' ? 'no report' : a.step;
+  const third = a.state === 'silent'
+    ? `last heard ${Math.round(now - a.refreshedAt)}s ago`
+    : `${String(Math.round(a.L.effort * 64)).padStart(2)} tok/s   $${a.cost.toFixed(2)}`;
+  return [`${a.call}  ${a.role}`, step.length > 32 ? step.slice(0, 31) + '…' : step, third];
+}
+function drawDataBlock(c) {
+  const a = hoverAgent;
+  if (!a || drag || puck || press || now - hoverSince < 0.25 || !agents.includes(a)) return;
+  c.save();
+  c.font = F_READOUT;
+  const lines = dataLines(a), w = Math.max(...lines.map(l => c.measureText(l).width)) + 14, h = lines.length * 15 + 7;
+  let bx = a.rx + 18, by = a.ry - h - 12;
+  if (bx + w > W - 4) bx = a.rx - 18 - w;
+  if (by < 4) by = a.ry + 14;
+  c.strokeStyle = rgba(PHOS, 0.35);
+  c.lineWidth = 1;
+  c.beginPath(); c.moveTo(a.rx, a.ry); c.lineTo(bx > a.rx ? bx : bx + w, by + (by < a.ry ? h : 0)); c.stroke();
+  c.fillStyle = 'rgba(8,18,20,.84)';
+  c.fillRect(bx, by, w, h);
+  c.fillStyle = rgba(PHOS, 0.9);
+  c.textBaseline = 'alphabetic';
+  lines.forEach((l, i) => c.fillText(l, bx + 7, by + 15 + i * 15));
+  c.restore();
+}
+function drawReplayBlips(c) {
+  const cols = [PHOS, AMBER, CERISE], sprites = [GLOW.phos, GLOW.amber, GLOW.fault];
+  for (const [nx, ny, b, g, k, env] of replay.frame.a) {
+    const x = cx + nx * R, y = cy + ny * R;
+    glow(c, sprites[k], x, y, 14 + 26 * b, (0.3 + 0.6 * b) * env);
+    c.strokeStyle = rgba(cols[k], (0.4 + 0.6 * b) * env);
+    c.lineWidth = 1.5;
+    glyphPath(c, g, x, y, GLYPH);
+    c.stroke();
+  }
+}
+function drawReplayLabel(c) {
+  c.save();
+  c.font = F_LEGEND;
+  c.fillStyle = rgba(PHOS, 0.8);
+  c.textAlign = 'left';
+  const ago = Math.max(0, Math.round(now - replay.frame.t));
+  c.fillText(replay.edge
+    ? `Replaying from when this sketch opened, ${ago} s ago. Let go to return to live.`
+    : `Replaying ${ago} s ago. Let go to return to live.`, 20, 22);
+  c.restore();
+}
+function renderScope() {
+  const c = sctx, tgt = currentTarget();
+  c.clearRect(0, 0, W, H);
+  drawBezel(c, tgt);
+  drawPrinted(c);
+  drawWash(c, tgt);
+  c.globalCompositeOperation = 'lighter';
+  if (!replay) drawSweep(c);
+  drawCoreRings(c, replay ? replay.frame.rings : coreRings.length, !replay);
+  drawRipples(c);
+  if (replay) drawReplayBlips(c);
+  else {
+    for (const a of agents) drawAgent(c, a);
+    if (REDUCED) drawReducedHalos(c);
+    drawDepartedGlow(c);
+  }
+  c.globalCompositeOperation = 'source-over';
+  drawMission(c);
+  if (replay) { drawReplayLabel(c); return; }
+  drawNotes(c);
+  drawFeedforward(c, tgt);
+  drawDepartedLabels(c);
+  drawDataBlock(c);
+}
+
+// ---------- rendering: cables and tethers, above everything ----------
+function bezierPt(x0, y0, mx, my, x1, y1, t) {
+  const u = 1 - t;
+  return [u * u * x0 + 2 * u * t * mx + t * t * x1, u * u * y0 + 2 * u * t * my + t * t * y1];
+}
+function drawCable(o, x0, y0, x1, y1, n, wobble = 0, alpha = 1) {
+  const d = Math.hypot(x1 - x0, y1 - y0) || 1, sag = Math.max(10, (620 - d) * 0.32);
+  let mx = (x0 + x1) / 2, my = (y0 + y1) / 2 + sag;
+  if (wobble) { mx += -(y1 - y0) / d * wobble; my += (x1 - x0) / d * wobble; }
+  o.lineCap = 'round';
+  const path = () => { o.beginPath(); o.moveTo(x0, y0); o.quadraticCurveTo(mx, my, x1, y1); };
+  path(); o.strokeStyle = `rgba(10,10,9,${0.6 * alpha})`; o.lineWidth = 4.5; o.stroke();
+  path(); o.strokeStyle = rgba(PHOS, 0.62 * alpha); o.lineWidth = 1.8; o.stroke();
+  o.fillStyle = rgba(PHOS, 0.9 * alpha);
+  o.beginPath(); o.arc(x1, y1, 3.6, 0, TAU); o.fill();
+  for (let i = 0; i < n; i++) {   // one detent tick per agent, near the plug
+    const t = 0.93 - i * 0.045;
+    const [px, py] = bezierPt(x0, y0, mx, my, x1, y1, t), [qx, qy] = bezierPt(x0, y0, mx, my, x1, y1, t + 0.01);
+    const l = Math.hypot(qx - px, qy - py) || 1, nx = -(qy - py) / l, ny = (qx - px) / l;
+    o.strokeStyle = rgba(PHOS, 0.9 * alpha);
+    o.lineWidth = 1.4;
+    o.beginPath(); o.moveTo(px - nx * 5, py - ny * 5); o.lineTo(px + nx * 5, py + ny * 5); o.stroke();
+  }
+}
+function overlayLabel(o, text) {
+  o.font = F_READOUT;
+  o.fillStyle = rgba(PHOS, 0.88);
+  o.textAlign = 'left';
+  o.textBaseline = 'alphabetic';
+  o.fillText(text, pointer.x + 14, pointer.y - 12);
+}
+function renderOverlay() {
+  const o = octx;
+  o.clearRect(0, 0, innerWidth, innerHeight);
+  if (drag && drag.kind === 'spawn') {
+    drawCable(o, drag.jx, drag.jy, pointer.x, pointer.y, drag.n);
+    overlayLabel(o, !drag.target ? 'drop inside the scope' : drag.n ? `+${drag.n} ${drag.role}` : 'at capacity');
+  }
+  if (drag && drag.kind === 'agent') {
+    const a = drag.agent;
+    const x0 = scopeRect.left + drag.anchorX, y0 = scopeRect.top + drag.anchorY, x1 = scopeRect.left + a.rx, y1 = scopeRect.top + a.ry;
+    const d = Math.hypot(x1 - x0, y1 - y0);
+    o.strokeStyle = rgba(PHOS, drag.outside ? 0.25 : 0.42);
+    o.lineWidth = clamp(2.4 - d / 170, 0.6, 2.4);   // the band thins as it stretches
+    if (drag.outside) o.setLineDash([3, 4]);
+    o.beginPath(); o.moveTo(x0, y0); o.lineTo(x1, y1); o.stroke();
+    o.setLineDash([]);
+    let label = '';
+    if (drag.outside) { const [vx, vy] = pointerVelocity(); label = Math.hypot(vx, vy) > 1100 ? 'stop now' : 'finish step, then leave'; }
+    else if (drag.dest) label = `move to ${sectors[drag.dest.sector].name}`;
+    if (label) overlayLabel(o, label);
+  }
+  for (let i = cables.length - 1; i >= 0; i--) {   // released cables twang and retract
+    const cb = cables[i], t = now - cb.t0;
+    if (t > 0.5) { cables.splice(i, 1); continue; }
+    const p = easeOut(t / 0.5), wob = 18 * Math.exp(-t / 0.09) * Math.sin(TAU * 12 * t);
+    if (cb.kind === 'absorb') drawCable(o, lerp(cb.x0, cb.x1, p), lerp(cb.y0, cb.y1, p), cb.x1, cb.y1, 0, wob, 1 - p);
+    else drawCable(o, cb.x0, cb.y0, lerp(cb.x1, cb.x0, p), lerp(cb.y1, cb.y0, p), 0, wob, 1 - p);
+  }
+  if (tether && !drag && agents.includes(tether.a)) {
+    const r = tether.el.getBoundingClientRect(), x1 = scopeRect.left + tether.a.rx, y1 = scopeRect.top + tether.a.ry;
+    o.setLineDash([2, 5]);
+    o.strokeStyle = rgba(AMBER, 0.55);
+    o.lineWidth = 1;
+    o.beginPath(); o.moveTo(r.left, r.top + r.height / 2); o.lineTo(x1, y1); o.stroke();
+    o.setLineDash([]);
+    o.strokeStyle = rgba(AMBER, 0.7);
+    o.beginPath(); o.arc(x1, y1, 12, 0, TAU); o.stroke();
+  }
+}
+function drawTrace() {
+  const c = tctx, w = TRACE_W, h = TRACE_H;
+  c.clearRect(0, 0, w, h);
+  c.strokeStyle = rgba(PRINT, 0.12);
+  c.lineWidth = 1;
+  c.beginPath(); c.moveTo(0, h - 4.5); c.lineTo(w, h - 4.5); c.stroke();
+  const n = traceSamples.length, step = w / 239, shift = clamp((now - lastSample) / 0.25, 0, 1) * step;
+  c.beginPath();
+  traceSamples.forEach((v, i) => {
+    const x = (i + 240 - n) * step - shift, y = h - 4 - v * (h - 8);
+    if (i) c.lineTo(x, y); else c.moveTo(x, y);
+  });
+  c.strokeStyle = rgba(PHOS, 0.82);
+  c.lineWidth = 1.2;
+  c.shadowColor = 'rgba(242,230,207,.5)';
+  c.shadowBlur = 4;
+  c.stroke();
+  c.shadowBlur = 0;
+  if (replay) {
+    const x = replay.f * w;
+    c.strokeStyle = rgba(PHOS, 0.95);
+    c.beginPath(); c.moveTo(x, 2); c.lineTo(x, h - 2); c.stroke();
+  }
+}
+function breatheStrips() {
+  const v = (0.35 + 0.65 * amberPulse(now)).toFixed(3);   // in phase with the agent's own amber halo
+  for (const s of stripsEl.children) s.style.setProperty('--breath', v);
+}
+
+// ---------- input: one grammar, pick up, aim, release ----------
+const pointer = { x: -1, y: -1, sx: -1, sy: -1, hist: [] };
+let drag = null, press = null, puck = null, hoverAgent = null, hoverSince = 0, hoverSpoke = -1, tether = null, replay = null;
+function updatePointer(e) {
+  pointer.x = e.clientX;
+  pointer.y = e.clientY;
+  pointer.sx = e.clientX - scopeRect.left;
+  pointer.sy = e.clientY - scopeRect.top;
+  const t = performance.now();
+  pointer.hist.push([e.clientX, e.clientY, t]);
+  while (pointer.hist.length > 2 && t - pointer.hist[0][2] > 90) pointer.hist.shift();
+}
+function pointerVelocity() {
+  const h = pointer.hist, t = performance.now();
+  if (h.length < 2 || t - h[h.length - 1][2] > 80) return [0, 0];
+  const a = h[0], b = h[h.length - 1], dt = Math.max(8, b[2] - a[2]) / 1000;
+  return [(b[0] - a[0]) / dt, (b[1] - a[1]) / dt];
+}
+const inScope = () => pointer.sx >= 0 && pointer.sy >= 0 && pointer.sx <= W && pointer.sy <= H;
+function nearestAgent(x, y, r) {
+  let best = null, bd = r;
+  for (const a of agents) {
+    if (!a.acquired || a.state === 'respawn' || a.state === 'landing' || a.held) continue;
+    const d = Math.hypot(a.rx - x, a.ry - y);
+    if (d < bd) { bd = d; best = a; }
+  }
+  return best;
+}
+function spokeAt(x, y) {
+  const [th, rho] = toPolar(x, y);
+  if (rho < CORE_RHO + 0.03 || rho > 1.16) return -1;
+  let best = -1, bd = 9;
+  sectors.forEach((q, k) => {
+    const d = Math.abs(angDiff(th, q.start * TAU)) * Math.min(rho, 1) * R;
+    if (d < bd) { bd = d; best = k; }
+  });
+  return best;
+}
+function updateHover() {
+  if (!inScope() || replay) {
+    hoverAgent = null;
+    hoverSpoke = -1;
+    return;
+  }
+  const a = nearestAgent(pointer.sx, pointer.sy, 14);
+  if (a !== hoverAgent) { hoverAgent = a; hoverSince = now; }
+  hoverSpoke = a || puck ? -1 : spokeAt(pointer.sx, pointer.sy);
+  scopeCv.style.cursor = puck ? 'crosshair' : a ? 'grab' : hoverSpoke >= 0 ? 'ew-resize' : departedAt(pointer.sx, pointer.sy) ? 'pointer' : 'crosshair';
+}
+
+// the puck: your words, waiting to be thrown
+// the target only changes when you move, so agents drifting under a still cursor can't change who hears you
+function puckTarget() {
+  if (puck && puck.target && !(puck.target.agent && !agents.includes(puck.target.agent))) return puck.target;
+  return aimAt();
+}
+function aimAt() {
+  if (!inScope()) return { kind: 'core' };
+  const [th, rho] = toPolar(pointer.sx, pointer.sy);
+  if (rho <= CORE_RHO + 0.02) return { kind: 'core' };
+  const a = nearestAgent(pointer.sx, pointer.sy, 11);
+  if (a) return { kind: 'agent', agent: a };
+  if (rho <= 1) return { kind: 'sector', sector: sectorAt(th)[0] };
+  return { kind: 'core' };
+}
+const targetLabel = t => (t.kind === 'core' ? 'to the whole swarm' : t.kind === 'agent' ? `to ${t.agent.call} only` : `to ${sectors[t.sector].name}`);
+function startPuck() {
+  puck = { text: '' };
+  puckEl.hidden = false;
+  puckEl.style.transition = 'none';
+  puckEl.style.opacity = '1';
+  hintEl.textContent = HINT_TYPING;
+  closeFlight();
+}
+function placePuck(aim) {
+  const x = pointer.x < 0 ? scopeRect.left + cx : pointer.x, y = pointer.y < 0 ? scopeRect.top + cy : pointer.y;
+  puckEl.style.transform = `translate(${x + 16}px, ${y + 14}px)`;
+  if (aim || !puck.target) puck.target = aimAt();
+  const label = targetLabel(puckTarget());
+  if (puckToEl.textContent !== label) puckToEl.textContent = label;
+}
+function cancelPuck() {
+  if (!puck) return;
+  puck = null;
+  puckEl.hidden = true;
+  hintEl.textContent = HINT;
+}
+function sendPuck() {
+  const text = puck.text.trim(), t = puckTarget();
+  puck = null;
+  hintEl.textContent = HINT;
+  if (!text) { puckEl.hidden = true; return; }
+  let px = pointer.x, py = pointer.y;
+  if (t.kind === 'core') { px = scopeRect.left + cx; py = scopeRect.top + cy; newMission(text); }
+  else if (t.kind === 'agent') { px = scopeRect.left + t.agent.rx; py = scopeRect.top + t.agent.ry; agentDirective(t.agent, text); }
+  else sectorDirective(t.sector, text, pointer.sx, pointer.sy);
+  puckEl.style.transition = 'transform .32s cubic-bezier(.5,0,.75,0), opacity .32s ease-in';
+  puckEl.style.transform = `translate(${px - 8}px, ${py - 8}px) scale(.2)`;
+  puckEl.style.opacity = '0';
+  setTimeout(() => { if (!puck) puckEl.hidden = true; }, 340);
+}
+
+function startAgentDrag(a) {
+  if (!agents.includes(a) || a.state === 'landing' || a.state === 'respawn') return;
+  drag = { kind: 'agent', agent: a, anchorX: a.rx, anchorY: a.ry, dest: null, outside: false };
+  a.held = true;
+  hoverAgent = null;
+  scopeCv.style.cursor = 'grabbing';
+}
+function startSpawn(role, mod) {
+  const r = mod.querySelector('.jack').getBoundingClientRect();
+  drag = { kind: 'spawn', role, jx: r.left + r.width / 2, jy: r.top + r.height / 2, n: 0, target: null, ghosts: [] };
+}
+function startSpokeDrag(k) {
+  const prev = (k - 1 + sectors.length) % sectors.length;
+  drag = { kind: 'spoke', k, prev, startPrev: sectors[prev].start, total: sectors[prev].w + sectors[k].w, relOrig: sectors[prev].w, snap: null, snapT: 0, movers: [] };
+}
+function scrubTo(px) {
+  const first = frames.findIndex(fr => fr.a.length);   // nothing before the first painted contact
+  if (first < 0) return;
+  const r = traceCv.getBoundingClientRect(), f = clamp((px - r.left) / r.width, 0, 1), t = now - (1 - f) * 60;
+  let idx = frames.findIndex(fr => fr.t >= t);
+  if (idx < 0) idx = frames.length - 1;
+  replay = { frame: frames[Math.max(idx, first)], f, edge: idx < first };
+  hoverAgent = null;
+}
+function moveDrag() {
+  const d = drag;
+  if (d.kind === 'agent') {
+    const [th, rho] = toPolar(pointer.sx, pointer.sy);
+    d.outside = !inScope() || rho > 1;
+    d.dest = null;
+    if (!d.outside && rho > CORE_RHO + 0.02) {
+      const [s, u] = sectorAt(th);
+      if (s !== d.agent.sector) d.dest = { sector: s, u, th };
+    }
+  } else if (d.kind === 'spawn') {
+    d.target = null;
+    d.n = 0;
+    d.ghosts = [];
+    if (!inScope()) return;
+    const [th, rho] = toPolar(pointer.sx, pointer.sy);
+    if (rho > 1 || rho <= CORE_RHO + 0.02) return;
+    const [s] = sectorAt(th);
+    d.target = { sector: s };
+    d.n = Math.min(clamp(1 + Math.floor((0.9 - rho) / 0.18), 1, 4), CAP - agents.length);   // push deeper for more voices
+    const spacing = 20 / (0.95 * R);
+    for (let i = 0; i < d.n; i++) d.ghosts.push(clampToSector(th + (i - (d.n - 1) / 2) * spacing, s));
+  } else if (d.kind === 'spoke') {
+    const [th] = toPolar(pointer.sx, pointer.sy);
+    let rel = wrap1(th / TAU - d.startPrev);
+    if (rel > d.total) rel = rel - d.total < 1 - rel ? d.total : 0;
+    rel = clamp(rel, 0.03, d.total - 0.03);
+    let snapped = null;
+    for (const v of [d.total / 2, d.relOrig]) if (Math.abs(rel - v) < 0.0045) { rel = v; snapped = v; }   // detents: even split, where it was
+    if (snapped !== null && d.snap !== snapped) d.snapT = now;
+    d.snap = snapped;
+    sectors[d.prev].w = rel;
+    sectors[d.k].w = d.total - rel;
+    if (d.k === 0) sectorOffset = d.startPrev + rel;
+    layoutSectors();
+    d.movers = plannedMovers(d.prev, d.k);
+  } else if (d.kind === 'strip') {
+    const dx = pointer.x - d.x0, dy = pointer.y - d.y0;
+    d.el.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx * 0.015}deg)`;
+  } else if (d.kind === 'scrub') {
+    scrubTo(pointer.x);
+  }
+}
+function endDrag() {
+  const d = drag;
+  drag = null;
+  if (d.kind === 'agent') {
+    const a = d.agent;
+    a.held = false;
+    scopeCv.style.cursor = 'crosshair';
+    if (d.outside) { const [vx, vy] = pointerVelocity(); depart(a, Math.hypot(vx, vy) > 1100 ? 'stopped' : 'released', vx, vy, pointer.sx, pointer.sy); }
+    else if (d.dest) reassign(a, d.dest.sector, d.dest.u);
+  } else if (d.kind === 'spawn') {
+    if (d.target && d.n > 0) {
+      for (const th of d.ghosts) { const [s, u] = sectorAt(th); spawnAgent(d.role, s, u); }
+      cables.push({ kind: 'absorb', x0: d.jx, y0: d.jy, x1: pointer.x, y1: pointer.y, t0: now });
+    } else {
+      cables.push({ kind: 'retract', x0: d.jx, y0: d.jy, x1: pointer.x, y1: pointer.y, t0: now });
+    }
+  } else if (d.kind === 'spoke') {
+    for (const [a, s] of d.movers) moveAcross(a, s, s === d.prev);
+  } else if (d.kind === 'strip') {
+    const dx = pointer.x - d.x0, [vx] = pointerVelocity(), bayLeft = bayEl.getBoundingClientRect().left;
+    if (pointer.x < bayLeft - 16) approve(d.el, d.agent);
+    else if (dx > 70 || vx > 650) deny(d.el, d.agent);
+    else {
+      d.el.style.transition = 'transform .45s cubic-bezier(.2,.9,.25,1.15)';
+      d.el.style.transform = '';
+      d.el.style.cursor = '';
+    }
+  } else if (d.kind === 'scrub') {
+    replay = null;
+  }
+}
+function cancelDrag() {
+  const d = drag;
+  if (!d) return;
+  drag = null;
+  if (d.kind === 'agent') d.agent.held = false;
+  else if (d.kind === 'spawn') cables.push({ kind: 'retract', x0: d.jx, y0: d.jy, x1: pointer.x, y1: pointer.y, t0: now });
+  else if (d.kind === 'strip') { d.el.style.transition = 'transform .4s'; d.el.style.transform = ''; d.el.style.cursor = ''; }
+  else if (d.kind === 'scrub') replay = null;
+  else if (d.kind === 'spoke') {
+    sectors[d.prev].w = d.relOrig;
+    sectors[d.k].w = d.total - d.relOrig;
+    if (d.k === 0) sectorOffset = d.startPrev + d.relOrig;
+    layoutSectors();
+  }
+}
+
+scopeCv.addEventListener('pointerdown', e => {
+  updatePointer(e);
+  e.preventDefault();
+  try { scopeCv.setPointerCapture(e.pointerId); } catch {}
+  if (replay || drag) return;
+  if (puck) { sendPuck(); return; }
+  const gone = departedAt(pointer.sx, pointer.sy);
+  if (gone) { undoDepart(gone); return; }
+  const a = nearestAgent(pointer.sx, pointer.sy, 14);
+  if (a) {
+    press = { agent: a, x0: e.clientX, y0: e.clientY, open: false };
+    press.timer = setTimeout(() => openFlight(a), 420);   // press and hold: the strip unrolls
+    return;
+  }
+  const k = spokeAt(pointer.sx, pointer.sy);
+  if (k >= 0) startSpokeDrag(k);
+});
+for (const mod of document.querySelectorAll('.module')) {
+  mod.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try { mod.setPointerCapture(e.pointerId); } catch {}
+    updatePointer(e);
+    if (drag) return;
+    cancelPuck();
+    startSpawn(mod.dataset.role, mod);
+  });
+}
+traceCv.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  try { traceCv.setPointerCapture(e.pointerId); } catch {}
+  updatePointer(e);
+  if (drag) return;
+  drag = { kind: 'scrub' };
+  scrubTo(e.clientX);
+});
+window.addEventListener('pointermove', e => {
+  updatePointer(e);
+  if (press && !drag && !press.open && Math.hypot(e.clientX - press.x0, e.clientY - press.y0) > 6) {
+    clearTimeout(press.timer);
+    const a = press.agent;
+    press = null;
+    startAgentDrag(a);
+  }
+  if (drag) moveDrag();
+  if (puck) placePuck(true);
+});
+window.addEventListener('pointerup', e => {
+  updatePointer(e);
+  if (press) { clearTimeout(press.timer); if (press.open) closeFlight(); press = null; }
+  if (drag) endDrag();
+});
+window.addEventListener('pointercancel', () => {
+  if (press) { clearTimeout(press.timer); closeFlight(); press = null; }
+  cancelDrag();
+});
+window.addEventListener('blur', () => cancelDrag());
+window.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target instanceof Element && e.target.closest('button') && (e.key === 'Enter' || e.key === ' ')) return;
+  if (e.key === 'Escape') { if (puck) cancelPuck(); else cancelDrag(); return; }
+  if (e.key === 'Enter') { if (puck) { e.preventDefault(); sendPuck(); } return; }
+  if (e.key === 'Backspace') {
+    if (!puck) return;
+    e.preventDefault();
+    puck.text = puck.text.slice(0, -1);
+    if (!puck.text) cancelPuck();
+    else puckTextEl.textContent = puck.text;
+    return;
+  }
+  if (e.key.length !== 1) return;
+  e.preventDefault();
+  if (!puck && e.key === ' ') return;
+  if (!puck) startPuck();
+  if (puck.text.length < 48) puck.text += e.key;
+  puckTextEl.textContent = puck.text;
+  placePuck();
+});
+$('restart').addEventListener('click', e => {
+  cancelDrag();
+  cancelPuck();
+  closeFlight();
+  replay = null;
+  iris = null;
+  pendingMission = null;
+  hoverAgent = null;
+  setupScenario();
+  e.currentTarget.blur();
+});
+window.addEventListener('resize', resize);
+
+// ---------- the loop ----------
+function frame(ts) {
+  const t = ts / 1000, dt = lastTs ? clamp(t - lastTs, 0, 0.05) : 1 / 60;
+  lastTs = t;
+  now += dt;
+  stepIris();
+  runScript();
+  for (const a of agents) stepTrue(a, dt);
+  stepOscillators(dt);
+  stepConsensus(dt);
+  stepSweep(dt);
+  for (const a of agents) stepDisplay(a, dt);
+  stepDeparted(dt);
+  stepMetrics(dt);
+  record();
+  if (!drag && !press) updateHover();
+  if (puck) placePuck();
+  breatheStrips();
+  renderScope();
+  renderOverlay();
+  drawTrace();
+  requestAnimationFrame(frame);
+}
+resize();
+setupScenario();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

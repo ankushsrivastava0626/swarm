@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.vercel/
+.DS_Store
+# the live colony's notes and answers
+live/
+# rendered videos
+breakout-videos/
