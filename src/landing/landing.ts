@@ -50,7 +50,10 @@ function liveLink(parent: HTMLElement): HTMLAnchorElement {
 
 // until the live colony opens, its place on the page says when; its light comes on then
 function launchNote(parent: HTMLElement): HTMLElement {
-  const p = el('p', 'go-live launch', parent);
+  const p = el('a', 'go-live launch', parent);
+  p.href = LAUNCH.repo;
+  p.target = '_blank';
+  p.rel = 'noopener';
   el('i', '', p);
   el('span', 'long', p, LAUNCH.long);
   el('span', 'short', p, LAUNCH.short);
