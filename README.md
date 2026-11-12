@@ -1,5 +1,7 @@
 # Swarm terrarium
 
+**See it live: [swarm.ankushsrivastava.me](https://swarm.ankushsrivastava.me)**
+
 A living observatory for a swarm of AI agents. The swarm is drawn as a bioluminescent ant colony under a macro lens: agents forage for your objectives, lay glowing veins of shared context, boil with ember where they are stuck, and flicker in unison when they agree. You read the colony from its motion and change its work with one gesture.
 
 The front page is a tour: seven chapters, each a label pinned to part of a simulated colony while the colony acts it out, explaining how the swarm works through the biology it borrows from. The last chapter hands that colony to you, and `/live` watches real agents. Everything runs on your own machine: clone this repo and see [Run real agents with jcode](#run-real-agents-with-jcode).
