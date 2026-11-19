@@ -17,6 +17,7 @@
 <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-041012?logo=vite&logoColor=white">
 <img alt="Node.js 24.14 or later" src="https://img.shields.io/badge/Node.js-24.14%2B-041012?logo=nodedotjs&logoColor=white">
 <img alt="Agents on jcode" src="https://img.shields.io/badge/agents-jcode-0f6e5c">
+<img alt="MIT license" src="https://img.shields.io/badge/license-MIT-0f6e5c">
 <img alt="Live demo" src="https://img.shields.io/badge/demo-swarm.ankushsrivastava.me-5fe3c2?labelColor=041012">
 
 </div>
@@ -354,3 +355,8 @@ Swarm terrarium stands on [jcode](https://jcode.sh), [OpenRouter](https://openro
 <a href="https://star-history.com/#ankushsrivastava0626/swarm&Date">
   <img alt="Star history chart" src="https://api.star-history.com/svg?repos=ankushsrivastava0626/swarm&type=Date" width="600">
 </a>
+
+## License
+
+[MIT](LICENSE) © 2026 Ankush Srivastava. Swarm terrarium isn't affiliated with jcode, OpenRouter, Inception or any
+of the projects above.
