@@ -200,26 +200,24 @@ key. On a touch screen, tap where you want food and type, and pinch to magnify.
 ## Architecture
 
 ```mermaid
-flowchart LR
-  subgraph browser["Your browser"]
-    hands(["Your hands"]) --> input["input/<br/>gestures, keys, undo"]
-    input -->|"commands"| rt["runtime/protocol.ts<br/>events in, commands out"]
-    rt -->|"events"| world["world/<br/>behaviour, physics, pheromones"]
-    world --> render["render/<br/>WebGL2 drawing"]
-    world --> glass["glass/<br/>labels, readout, answers"]
-    tour["landing/<br/>the tour"] --> sim["SimulatedRuntime"]
-    sim --- rt
-    remote["RemoteRuntime"] --- rt
+flowchart TB
+  subgraph browser["In your browser"]
+    direction LR
+    you(["You"]) -->|"gestures"| input["input/<br/>pointer, keys, undo"]
+    tour["landing/<br/>the tour"] -->|"scenes"| rt["runtime/<br/>simulated or remote"]
+    input -->|"commands"| rt
+    rt -->|"events"| world["world/<br/>the colony"]
+    world --> draw["render/, glass/<br/>WebGL2, labels, readout"]
   end
-  subgraph machine["npm run live"]
-    live["server/live.ts<br/>port 5198"] --> swarm["server/swarm.ts<br/>plan, research, write, review, decide"]
-    swarm --> jcode["server/jcode.ts<br/>one jcode server,<br/>a session per working agent"]
+  subgraph machine["On your machine, with npm run live"]
+    direction LR
+    live["server/live.ts<br/>port 5198"] --> swarm["server/swarm.ts<br/>plan, research, write,<br/>review, decide"]
+    swarm --> jcode["server/jcode.ts<br/>a jcode session<br/>per working agent"]
     jcode <--> nest[("live/nest/<br/>shared notes")]
-    jcode --> findings[("live/findings/")]
   end
-  remote <-->|"/live/"| live
-  jcode -->|"model calls"| model[("OpenRouter")]
-  jcode -->|"search, fetch"| web[("Google, SearXNG,<br/>the web")]
+  browser <-->|"events and commands, over /live/"| machine
+  machine -->|"model calls"| model[("OpenRouter")]
+  machine -->|"search and fetch"| web[("Google, SearXNG, the web")]
 ```
 
 - **`src/landing/`** is the tour: its chapters, the director that stages each scene, and the labels that find empty glass.
